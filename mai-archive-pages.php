@@ -99,9 +99,14 @@ final class Mai_Archive_Pages_Plugin {
 		}
 
 		// Plugin Includes Path.
-		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_INCLUDES_DIR' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_INCLUDES_DIR', MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_DIR . 'includes/' );
+		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_CLASSES_DIR' ) ) {
+			define( 'MAI_ARCHIVE_PAGES_PLUGIN_CLASSES_DIR', MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_DIR . 'classes/' );
 		}
+
+		// Plugin Includes Path.
+		// if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_INCLUDES_DIR' ) ) {
+		// 	define( 'MAI_ARCHIVE_PAGES_PLUGIN_INCLUDES_DIR', MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_DIR . 'includes/' );
+		// }
 
 		// Plugin Folder URL.
 		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_URL' ) ) {
@@ -117,7 +122,6 @@ final class Mai_Archive_Pages_Plugin {
 		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_BASENAME' ) ) {
 			define( 'MAI_ARCHIVE_PAGES_PLUGIN_BASENAME', dirname( plugin_basename( __FILE__ ) ) );
 		}
-
 	}
 
 	/**
@@ -130,8 +134,10 @@ final class Mai_Archive_Pages_Plugin {
 	private function includes() {
 		// Include vendor libraries.
 		require_once __DIR__ . '/vendor/autoload.php';
+		// Classes.
+		foreach ( glob( MAI_ARCHIVE_PAGES_PLUGIN_CLASSES_DIR . '*.php' ) as $file ) { include $file; }
 		// Includes.
-		foreach ( glob( MAI_ARCHIVE_PAGES_PLUGIN_INCLUDES_DIR . '*.php' ) as $file ) { include $file; }
+		// foreach ( glob( MAI_ARCHIVE_PAGES_PLUGIN_INCLUDES_DIR . '*.php' ) as $file ) { include $file; }
 	}
 
 	/**
@@ -142,8 +148,9 @@ final class Mai_Archive_Pages_Plugin {
 	 */
 	public function hooks() {
 
-		add_action( 'admin_init', array( $this, 'updater' ) );
-		add_action( 'init',       array( $this, 'register_content_types' ) );
+		add_action( 'admin_init', [ $this, 'updater' ] );
+		add_action( 'init',       [ $this, 'register_content_types' ] );
+		add_action( 'init',       [ $this, 'init' ] );
 
 		register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
@@ -221,6 +228,15 @@ final class Mai_Archive_Pages_Plugin {
 			'rewrite'            => false,
 			'supports'           => array( 'title', 'editor' ),
 		) );
+	}
+
+	/**
+	 * Plugin init.
+	 *
+	 * @return  void
+	 */
+	public function init() {
+		new Mai_Archive_Pages;
 	}
 
 	/**

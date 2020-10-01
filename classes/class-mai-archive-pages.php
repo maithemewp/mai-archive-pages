@@ -1,9 +1,5 @@
 <?php
 
-add_action( 'init', function() {
-	new Mai_Archive_Pages;
-});
-
 class Mai_Archive_Pages {
 
 	/**
