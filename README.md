@@ -1,2 +1,2 @@
-# Starter Plugin
-Starter plugin for BizBudding, Inc
+# Mai Archive Pages
+Build robust and SEO-friendly archive pages with blocks.
