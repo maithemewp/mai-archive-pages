@@ -217,7 +217,7 @@ class Mai_Archive_Pages {
 		$posts = get_posts(
 			[
 				'post_type'              => $this->post_type,
-				'post_status'            => 'any',
+				'post_status'            => [ 'publish', 'private' ],
 				'name'                   => $slug,
 				'posts_per_page'         => 1,
 				'no_found_rows'          => true,
@@ -230,8 +230,12 @@ class Mai_Archive_Pages {
 			return;
 		}
 
-		$post    = reset( $posts );
-		$content = $this->get_processed_content( $post->post_content );
+		$post   = reset( $posts );
+		$status = $post->post_status;
+
+		if ( 'publish' === $status || ( 'private' === $status && current_user_can( 'edit_posts' ) ) ) {
+			$content = $this->get_processed_content( $post->post_content );
+		}
 
 		if ( ! $content ) {
 			return;
