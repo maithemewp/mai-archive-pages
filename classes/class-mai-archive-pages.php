@@ -33,7 +33,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Class constructor
 	 *
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 */
 	public function __construct() {
 		if ( ! function_exists( 'genesis' ) ) {
@@ -41,14 +41,22 @@ class Mai_Archive_Pages {
 		}
 
 		$this->post_type = 'mai_archive_page';
-		$this->prefix    = 'maiap';
+		$this->prefix    = 'mai';
 
 		add_action( 'template_redirect',    [ $this, 'new_archive_page' ] );
 		add_action( 'admin_bar_menu',       [ $this, 'admin_bar_link_front' ], 90 );
 		add_action( 'admin_bar_menu',       [ $this, 'admin_bar_link_back' ], 90 );
 		add_action( 'genesis_before_while', [ $this, 'do_content' ] );
+		add_action( 'delete_term',          [ $this, 'delete_archive_page' ] );
 	}
 
+	/**
+	 * Creates a new archive page.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
 	function new_archive_page() {
 		if ( ! $this->has_access() ) {
 			return;
@@ -92,12 +100,26 @@ class Mai_Archive_Pages {
 		exit();
 	}
 
+	/**
+	 * Output the admin toolbar link on the front end.
+	 * Links to the archive page content editor.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param object $wp_admin_bar
+	 *
+	 * @return void
+	 */
 	function admin_bar_link_front( $wp_admin_bar ) {
 		if ( is_admin() ) {
 			return;
 		}
 
 		if ( ! $this->has_access() ) {
+			return;
+		}
+
+		if ( ! ( $this->is_taxonomy() || $this->is_post_type() ) ) {
 			return;
 		}
 
@@ -114,7 +136,7 @@ class Mai_Archive_Pages {
 			return;
 		}
 
-		$title = $slug = '';
+		$title = $slug = $id = '';
 
 		if ( $this->is_taxonomy() ) {
 
@@ -139,10 +161,14 @@ class Mai_Archive_Pages {
 			$slug  = $this->get_post_type_slug( $post_type );
 		}
 
+		if ( ! ( $title && $slug ) ) {
+			return;
+		}
+
 		$url = home_url( add_query_arg( [
 			'maiap'       => 'new',
-			'maiap_title' => urlencode( $this->get_post_type_title( $post_type ) ),
-			'maiap_slug'  => $this->get_post_type_slug( $post_type ),
+			'maiap_title' => urlencode( $title ),
+			'maiap_slug'  => $slug,
 		] ) );
 
 		if ( ! $url ) {
@@ -156,6 +182,16 @@ class Mai_Archive_Pages {
 		] );
 	}
 
+	/**
+	 * Output the admin toolbar link in the backend.
+	 * Links to the actual archive.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param object $wp_admin_bar
+	 *
+	 * @return void
+	 */
 	function admin_bar_link_back( $wp_admin_bar ) {
 		if ( ! is_admin() ) {
 			return;
@@ -171,19 +207,46 @@ class Mai_Archive_Pages {
 			return;
 		}
 
-		$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
-		$slug    = get_post_field( 'post_name', $post_id );
-		$parts   = explode( '_', $slug );
-		$prefix  = isset( $parts[0] ) ? $parts[0] : '';
-		$name    = isset( $parts[1] ) ? $parts[1] : '';
-		$id      = isset( $parts[2] ) ? $parts[2] : '';
-		$link    = false;
+		$post_id        = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
+		$slug           = get_post_field( 'post_name', $post_id );
+		$taxonomy_slug  = sprintf( '%s_taxonomy_', $this->prefix );
+		$post_type_slug = sprintf( '%s_post_type_', $this->prefix );
+		$type           = false;
+		$is_valid       = false;
 
-		if ( $name && $id && taxonomy_exists( $name ) ) {
-			$link = get_term_link( (int) $id, $name );
+		if ( $this->has_string( $taxonomy_slug, $slug ) ) {
+			$type     = 'taxonomy';
+			$slug     = str_replace( $taxonomy_slug, '', $slug );
+			$is_valid = true;
+		} elseif ( $this->has_string( $post_type_slug, $slug ) ) {
+			$type     = 'post_type';
+			$slug     = str_replace( $post_type_slug, '', $slug );
+			$is_valid = true;
 		}
-		elseif ( $name && post_type_exists( $name ) ) {
-			$link = get_post_type_archive_link( $name );
+
+		if ( ! $is_valid ) {
+			return;
+		}
+
+		$parts = explode( '_', $slug );
+		$id    = isset( $parts[0] ) ? $parts[0] : '';
+		$link  = false;
+
+		if ( ! ( $type && $id ) ) {
+			return;
+		}
+
+		if ( 'taxonomy' === $type ) {
+			$term = get_term( $id );
+			if ( ! $term ) {
+				return;
+			}
+			$link = get_term_link( $term );
+		} elseif ( 'post_type' === $type ) {
+			if ( ! post_type_exists( $id ) ) {
+				return;
+			}
+			$link = get_post_type_archive_link( $id );
 		}
 
 		if ( ! $link ) {
@@ -197,6 +260,13 @@ class Mai_Archive_Pages {
 		] );
 	}
 
+	/**
+	 * Output the archive page content.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
 	function do_content() {
 		$slug = '';
 
@@ -252,6 +322,31 @@ class Mai_Archive_Pages {
 		);
 	}
 
+	/**
+	 * Deletes the archive page when a term is deleted.
+	 *
+	 * @param int $term_id The term ID.
+	 *
+	 * @return void
+	 */
+	function delete_archive_page( $term_id ) {
+		$slug = $this->get_term_slug( $term_id );
+		$page = get_page_by_path( $slug, OBJECT, $this->post_type );
+		if ( ! $page ) {
+			return;
+		}
+		wp_delete_post( $page->ID );
+	}
+
+	/**
+	 * Gets processed content, ready for display.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string $content The raw content.
+	 *
+	 * @return string
+	 */
 	function get_processed_content( $content ) {
 		if ( function_exists( 'mai_get_processed_content' ) ) {
 			return mai_get_processed_content( $content );
@@ -277,6 +372,13 @@ class Mai_Archive_Pages {
 		return $content;
 	}
 
+	/**
+	 * Gets an archive page ID.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return int
+	 */
 	function get_page_id() {
 		$slug = false;
 		if ( $this->is_taxonomy() ) {
@@ -287,44 +389,151 @@ class Mai_Archive_Pages {
 		return $slug ? get_page_by_path( $slug, OBJECT, $this->post_type ) : 0;
 	}
 
+	/**
+	 * Builds a post type archive title from the post type name.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string The post type name.
+	 *
+	 * @return string
+	 */
 	function get_post_type_title( $post_type ) {
 		$post_type = get_post_type_object( $post_type );
 		return $this->get_title( $post_type->label );
 	}
 
+	/**
+	 * Builds a post type archive slug from the post type name.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string The post type name.
+	 *
+	 * @return string
+	 */
 	function get_post_type_slug( $post_type) {
-		return $this->get_slug( $post_type );
+		return $this->get_slug( 'post_type', $post_type );
 	}
 
+	/**
+	 * Builds a term title from the term ID.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int The term ID.
+	 *
+	 * @return string
+	 */
 	function get_term_title( $term_id ) {
 		$term     = get_term( $term_id );
 		$taxonomy = get_taxonomy( $term->taxonomy );
 		return $this->get_title( $term->name, $taxonomy->labels->singular_name );
 	}
 
+	/**
+	 * Builds a term slug from the term ID.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int The term ID.
+	 *
+	 * @return string
+	 */
 	function get_term_slug( $term_id ) {
-		$term = get_term( $term_id );
-		return $this->get_slug( $term->taxonomy, $term_id );
+		return $this->get_slug( 'taxonomy', $term_id );
 	}
 
-	function get_title( $title, $name = '' ) {
-		$name = $name ?: __( 'Archive', 'mai-archive-pages' );
-		return sprintf( '%s [%s]', $title, $name );
+	/**
+	 * Builds a title from values.
+	 *
+	 * {Post type label} [Archive]
+	 * {Term name} [{Taxonomy label}]
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param $name  The content name.
+	 * @param $label The content label.
+	 *
+	 * @return string
+	 */
+	function get_title( $name, $label = '' ) {
+		$label = $label ?: __( 'Archive', 'mai-archive-pages' );
+		return sprintf( '%s [%s]', $name, $label );
 	}
 
-	function get_slug( $type, $name = '' ) {
-		return $name ? sprintf( '%s_%s_%s', $this->prefix, $type, $name ) : sprintf( '%s_%s', $this->prefix, $type );
+	/**
+	 * Builds a slug name from the content type and content name.
+	 *
+	 * mai_post_type_{post_type_name}
+	 * mai_taxonomy_{term_id}
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string     $content_type The content type, 'post_type' or 'taxonomy'.
+	 * @param string|int $id           The content name or id, either post type name or term id.
+	 *
+	 * @return string
+	 */
+	function get_slug( $content_type, $id ) {
+		return sprintf( '%s_%s_%s', $this->prefix, $content_type, $id );
 	}
 
+	/**
+	 * Checks if current page is a post type archive.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return bool
+	 */
 	function is_post_type() {
 		return is_home() || is_post_type_archive();
 	}
 
+	/**
+	 * Checks if current page is a taxonomy archive.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return bool
+	 */
 	function is_taxonomy() {
 		return is_category() || is_tag() || is_tax();
 	}
 
+	/**
+	 * Checks if the user has access to create or edit archives.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return bool
+	 */
 	function has_access() {
 		return is_user_logged_in() && current_user_can( 'edit_posts' );
+	}
+
+	/**
+	 * Checks if a string contains at least one specified string.
+	 * Taken from mai_has_string() in Mai Engine plugin.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string|array $needle   String or array of strings to check for.
+	 * @param string       $haystack String to check in.
+	 *
+	 * @return string
+	 */
+	function has_string( $needle, $haystack ) {
+		if ( is_array( $needle ) ) {
+			foreach ( $needle as $string ) {
+				if ( false !== strpos( $haystack, $string ) ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		return false !== strpos( $haystack, $needle );
 	}
 }
