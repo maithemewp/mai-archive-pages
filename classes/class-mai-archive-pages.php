@@ -263,7 +263,7 @@ class Mai_Archive_Pages {
 			echo '<tbody>';
 				echo '<tr class="form-field term-content-wrap">';
 					printf( '<th scope="row">%s</th>', __( 'Content', 'mai-archive-pages' ) );
-					printf( '<td><a href="%s" class="button button-secondary"><span class="dashicons dashicons-edit" style="margin-top:4px;margin-left:-4px;"></span> %s</a></td>', $link, __( 'Edit Archive Page', 'mai-archive-pages' ) );
+					printf( '<td><a href="%s" class="button button-secondary"><span class="dashicons dashicons-edit" style="margin-top:4px;margin-left:-4px;"></span> %s</a></td>', $link, __( 'Edit Archive Content', 'mai-archive-pages' ) );
 				echo '</tr>';
 			echo '</body>';
 		echo '</table>';
