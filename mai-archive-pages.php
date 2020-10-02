@@ -193,14 +193,10 @@ final class Mai_Archive_Pages_Plugin {
 	 */
 	public function register_content_types() {
 
-		/***********************
-		 *  Custom Post Types  *
-		 ***********************/
-
 		register_post_type( 'mai_archive_page', array(
 			'exclude_from_search' => true,
 			'has_archive'         => false,
-			'hierarchical'        => true,
+			'hierarchical'        => false,
 			'labels'              => array(
 				'name'               => _x( 'Archive Pages', 'Archive Page general name',      'mai-archive' ),
 				'singular_name'      => _x( 'Archive Page', 'Archive Page singular name',      'mai-archive' ),
@@ -219,7 +215,7 @@ final class Mai_Archive_Pages_Plugin {
 			),
 			'menu_icon'          => 'dashicons-admin-page',
 			'public'             => false,
-			'publicly_queryable' => false,
+			'publicly_queryable' => is_admin(),
 			'show_in_menu'       => false,
 			'show_in_nav_menus'  => false,
 			'show_in_rest'       => true,
