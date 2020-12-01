@@ -165,7 +165,7 @@ class Mai_Archive_Pages {
 				'maiap_title' => urlencode( $title ),
 				'maiap_slug'  => $slug,
 			],
-			admin_url( 'edit.php?post_type=' . $this->post_type ),
+			admin_url( 'edit.php?post_type=' . $this->post_type )
 		);
 	}
 
