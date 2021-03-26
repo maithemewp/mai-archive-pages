@@ -43,12 +43,13 @@ class Mai_Archive_Pages {
 		$this->post_type = 'mai_archive_page';
 		$this->prefix    = 'mai';
 
-		add_action( 'admin_bar_menu',               [ $this, 'admin_bar_link_front' ], 90 );
-		add_action( 'admin_bar_menu',               [ $this, 'admin_bar_link_back' ], 90 );
+		add_action( 'admin_bar_menu',               [ $this, 'admin_bar_link_front' ], 99 );
+		add_action( 'admin_bar_menu',               [ $this, 'admin_bar_link_back' ], 99 );
 		add_action( 'load-edit.php',                [ $this, 'load_archive_pages' ] );
 		add_action( 'load-term.php',                [ $this, 'load_term_edit' ] );
-		add_action( 'genesis_before_while',         [ $this, 'do_content' ] );
-		add_action( 'woocommerce_before_shop_loop', [ $this, 'do_content' ], 12 );
+		add_action( 'genesis_loop',                 [ $this, 'do_content_before' ], 5 );
+		add_action( 'genesis_loop',                 [ $this, 'do_content_after' ], 15 );
+		// add_action( 'woocommerce_before_shop_loop', [ $this, 'do_content_before' ], 12 );
 		add_action( 'delete_term',                  [ $this, 'delete_archive_page' ] );
 		add_filter( 'post_type_link',               [ $this, 'permalink' ], 10, 2 );
 	}
@@ -59,7 +60,7 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param object $wp_admin_bar
+	 * @param object $wp_admin_bar The admin bar object.
 	 *
 	 * @return void
 	 */
@@ -76,15 +77,59 @@ class Mai_Archive_Pages {
 			return;
 		}
 
-		$link_title = '<span class="ab-icon dashicons dashicons-edit" style="margin-top:2px;"></span><span class="ab-label">' . __( 'Edit Archive Content', 'mai-archive-pages' ) . '</span>';
-		$page_id    = $this->get_archive_page_id();
+		$this->add_admin_bar_link_front( $wp_admin_bar, true );
+		$this->add_admin_bar_link_front( $wp_admin_bar, false );
+	}
+
+	/**
+	 * Adds an admin bar link.
+	 *
+	 * @since TBD
+	 *
+	 * @param object $wp_admin_bar The admin bar object.
+	 * @param bool   $before       If before or after content.
+	 *
+	 * @return void
+	 */
+	function add_admin_bar_link_front( $wp_admin_bar, $before ) {
+		$link_title = $before ? __( 'Edit Content Before', 'mai-archive-pages' ) : __( 'Edit Content After', 'mai-archive-pages' );
+		$page_id    = $this->get_archive_page_id( $before );
+		$node_id    = $before ? 'mai-archive-page-before' : 'mai-archive-page-after';
+		$parent     = 'edit';
+
+		if ( is_post_type_archive() ) {
+			// If has Genesis CPT archives settings.
+			if ( post_type_supports( get_post_type(), 'genesis-cpt-archives-settings' ) ) {
+				$parent = 'cpt-archive-settings';
+			}
+			// If Woo Shop page.
+			elseif ( class_exists( 'WooCommerce' ) && is_shop() ) {
+				$parent = 'mai-woocommerce-shop-page';
+			}
+			// Any other post type.
+			else {
+				$parent = 'mai-archive-page';
+
+				static $has_parent_node = false;
+
+				if ( ! $has_parent_node ) {
+					$wp_admin_bar->add_node( [
+						'id'     => $parent,
+						'title'  => '<span class="ab-icon dashicons dashicons-edit" style="margin-top:2px;"></span><span class="ab-label">' . __( 'Edit Archive Content', 'mai-archive-pages' ) . '</span>',
+						'href'   => '#',
+					] );
+
+					$has_parent_node = true;
+				}
+			}
+		}
 
 		if ( $page_id ) {
-
 			$wp_admin_bar->add_node( [
-				'id'    => 'mai-archive-page',
-				'title' => $link_title,
-				'href'  => get_edit_post_link( $page_id, false ),
+				'id'     => $node_id,
+				'parent' => $parent,
+				'title'  => $link_title,
+				'href'   => get_edit_post_link( $page_id, false ),
 			] );
 
 			return;
@@ -113,16 +158,17 @@ class Mai_Archive_Pages {
 			return;
 		}
 
-		$url = $this->get_create_new_archive_page_url( $id, $type );
+		$url = $this->get_create_new_archive_page_url( $id, $type, $before );
 
 		if ( ! $url ) {
 			return;
 		}
 
 		$wp_admin_bar->add_node( [
-			'id'    => 'mai-archive-page',
-			'title' => $link_title,
-			'href'  => $url,
+			'id'     => $node_id,
+			'parent' => $parent,
+			'title'  => $link_title,
+			'href'   => $url,
 		] );
 	}
 
@@ -131,24 +177,24 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param int|string $id The content ID.
-	 * @param string $type   The content type.
+	 * @param int|string $id   The content ID.
+	 * @param string     $type The content type.
 	 *
 	 * @return void
 	 */
-	function get_create_new_archive_page_url( $id, $type ) {
+	function get_create_new_archive_page_url( $id, $type, $before ) {
 		if ( ! ( $id && $type ) ) {
 			return;
 		}
 
 		switch ( $type ) {
 			case 'taxonomy':
-				$title = $this->get_term_title( $id );
-				$slug  = $this->get_archive_term_slug( $id );
+				$title = $this->get_term_title( $id, $before );
+				$slug  = $this->get_archive_term_slug( $id, $before );
 			break;
 			case 'post_type':
-				$title = $this->get_post_type_title( $id );
-				$slug  = $this->get_archive_post_type_slug( $id );
+				$title = $this->get_post_type_title( $id, $before );
+				$slug  = $this->get_archive_post_type_slug( $id, $before );
 			break;
 			default:
 				$title = '';
@@ -232,7 +278,7 @@ class Mai_Archive_Pages {
 		$current_screen = get_current_screen();
 		$taxonomy       = $current_screen->taxonomy;
 
-		add_action( "{$taxonomy}_edit_form", [ $this, 'add_edit_archive_button' ], 2, 2 );
+		add_action( "{$taxonomy}_edit_form", [ $this, 'add_edit_archive_buttons' ], 2, 2 );
 	}
 
 	/**
@@ -240,22 +286,23 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param WP_Term $term    The term you are editing.
-	 * @param string $taxonomy The taxonomy the term belongs to.
+	 * @param WP_Term $term     The term you are editing.
+	 * @param string  $taxonomy The taxonomy the term belongs to.
 	 *
 	 * @return void
 	 */
-	function add_edit_archive_button( $term, $taxonomy ) {
-		$slug     = $this->get_archive_term_slug( $term->term_id );
-		$existing = get_page_by_path( $slug, OBJECT, $this->post_type );
+	function add_edit_archive_buttons( $term, $taxonomy ) {
+		$before_slug = $this->get_archive_term_slug( $term->term_id, true );
+		$after_slug  = $this->get_archive_term_slug( $term->term_id, false );
 
-		if ( $existing ) {
-			$link = get_edit_post_link( $existing, false );
-		} else {
-			$link = $this->get_create_new_archive_page_url( $term->term_id, 'taxonomy' );
+		if ( ! ( $before_slug || $after_slug ) ) {
+			return;
 		}
 
-		if ( ! $link ) {
+		$before = $this->get_edit_archive_button( $term, $before_slug, true );
+		$after  = $this->get_edit_archive_button( $term, $after_slug, false );
+
+		if ( ! ( $before || $after ) ) {
 			return;
 		}
 
@@ -263,14 +310,51 @@ class Mai_Archive_Pages {
 			echo '<tbody>';
 				echo '<tr class="form-field term-content-wrap">';
 					printf( '<th scope="row">%s</th>', __( 'Content', 'mai-archive-pages' ) );
-					printf( '<td><a href="%s" class="button button-secondary"><span class="dashicons dashicons-edit" style="margin-top:4px;margin-left:-4px;"></span> %s</a></td>', $link, __( 'Edit Archive Content', 'mai-archive-pages' ) );
+					echo '<td>';
+					if ( $before ) {
+						echo $before;
+					}
+					if ( $after ) {
+						echo $after;
+					}
+					echo '<td>';
 				echo '</tr>';
 			echo '</body>';
 		echo '</table>';
 	}
 
 	/**
-	 * Creates a new archive page.
+	 * Gets a button link to the term edit page.
+	 *
+	 * @since TBD
+	 *
+	 * @param WP_Term $term The term you are editing.
+	 * @param string  $slug The slug of the existing post, if available.
+	 * @param bool    $before If before or after content.
+	 *
+	 * @return string
+	 */
+	function get_edit_archive_button( $term, $slug, $before ) {
+		$existing = get_page_by_path( $slug, OBJECT, $this->post_type );
+
+		if ( $existing ) {
+			$link = get_edit_post_link( $existing, false );
+		} else {
+			$link = $this->get_create_new_archive_page_url( $term->term_id, 'taxonomy', $before );
+		}
+
+		if ( ! $link ) {
+			return;
+		}
+
+		$append = $before ? __( 'Before', 'mai-archive-pages' ) : __( 'After', 'mai-archive-pages' );
+		$text   = sprintf( '%s %s', __( 'Edit Archive Content', 'mai-archive-pages' ), $append );
+
+		return sprintf( '<a href="%s" class="button button-secondary" style="margin-right:12px;"><span class="dashicons dashicons-edit" style="margin-top:4px;margin-left:-4px;"></span> %s</a>', $link, $text );
+	}
+
+	/**
+	 * Creates a new archive page when loading the edit page.
 	 *
 	 * @since 0.1.0
 	 *
@@ -327,46 +411,67 @@ class Mai_Archive_Pages {
 	/**
 	 * Output the archive page content.
 	 *
-	 * @since 0.1.0
+	 * @since TBD
 	 *
 	 * @return void
 	 */
-	function do_content() {
+	function do_content_before() {
+		$this->do_content( true );
+	}
+
+	/**
+	 * Output the archive page content.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	function do_content_after() {
+		$this->do_content( false );
+	}
+
+	/**
+	 * Output the archive page content.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param bool $before If before or after content.
+	 *
+	 * @return void
+	 */
+	function do_content( $before ) {
+		if ( ! ( $this->is_post_type() || $this->is_taxonomy() ) ) {
+			return;
+		}
+
 		$slug = '';
 
 		if ( $this->is_taxonomy() && ! is_paged() ) {
 
 			$term = get_queried_object();
-			$slug = $term ? $this->get_archive_term_slug( $term->term_id ) : '';
+			$slug = $term ? $this->get_archive_term_slug( $term->term_id, $before ) : '';
 
 		} elseif ( $this->is_post_type() && ! is_paged() ) {
 
-			$slug = $this->get_archive_post_type_slug( get_post_type() );
+			$slug = $this->get_archive_post_type_slug( get_post_type(), $before );
 		}
 
 		if ( ! $slug ) {
 			return;
 		}
 
-		$posts = get_posts(
-			[
-				'post_type'              => $this->post_type,
-				'post_status'            => [ 'publish', 'private' ],
-				'name'                   => $slug,
-				'posts_per_page'         => 1,
-				'no_found_rows'          => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-				'suppress_filters'       => false, // https://github.com/10up/Engineering-Best-Practices/issues/116
-			]
-		);
+		$post = get_page_by_path( $slug, OBJECT, 'mai_archive_page' );
 
-		if ( ! $posts ) {
+		if ( ! $post ) {
 			return;
 		}
 
-		$post   = reset( $posts );
-		$status = $post->post_status;
+		$status  = $post->post_status;
+		$content = trim( $post->post_content );
+
+		if ( ! $content ) {
+			return;
+		}
 
 		if ( 'publish' === $status || ( 'private' === $status && current_user_can( 'edit_posts' ) ) ) {
 			$content = $this->get_processed_content( $post->post_content );
@@ -376,6 +481,11 @@ class Mai_Archive_Pages {
 			return;
 		}
 
+		$location = $before ? 'before' : 'after';
+		$atts     = [
+			'class' => sprintf( 'archive-page-content archive-page-content-%s', $location ),
+		];
+
 		genesis_markup(
 			[
 				'open'    => '<div %s>',
@@ -383,6 +493,10 @@ class Mai_Archive_Pages {
 				'content' => $content,
 				'context' => 'archive-page-content',
 				'echo'    => true,
+				'atts'    => $atts,
+				'params'  => [
+					'location' => $location,
+				]
 			]
 		);
 	}
@@ -397,12 +511,22 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function delete_archive_page( $term_id ) {
-		$slug = $this->get_archive_term_slug( $term_id );
-		$page = get_page_by_path( $slug, OBJECT, $this->post_type );
-		if ( ! $page ) {
+		$slugs = [
+			$this->get_archive_term_slug( $term_id, true ),
+			$this->get_archive_term_slug( $term_id, false ),
+		];
+
+		if ( ! $slugs ) {
 			return;
 		}
-		wp_delete_post( $page->ID );
+
+		foreach ( $slugs as $slug ) {
+			$page = get_page_by_path( $slug, OBJECT, $this->post_type );
+			if ( ! $page ) {
+				continue;
+			}
+			wp_delete_post( $page->ID );
+		}
 	}
 
 	/**
@@ -489,12 +613,22 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @var string $slug The post slug.
+	 * @param string $slug The post slug.
 	 *
 	 * @return string|int
 	 */
 	function get_id_from_slug( $slug ) {
-		return str_replace( sprintf( '%s_%s_', $this->prefix, $this->get_type_from_slug( $slug ) ), '', $slug );
+		$type   = $this->get_type_from_slug( $slug );
+		$before = sprintf( '%s_%s_', $this->prefix, $type );
+		$after  = sprintf( '%s_%s_after_', $this->prefix, $type );
+
+		if ( mai_has_string( $after, $slug ) ) {
+			$id = str_replace( $after, '', $slug );
+		} else {
+			$id = str_replace( $before, '', $slug );
+		}
+
+		return $id;
 	}
 
 	/**
@@ -502,7 +636,7 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @var string $slug The post slug.
+	 * @param string $slug The post slug.
 	 *
 	 * @return string
 	 */
@@ -525,8 +659,8 @@ class Mai_Archive_Pages {
 	 *
 	 * @return int
 	 */
-	function get_archive_page_id() {
-		$slug = $this->get_archive_page_slug();
+	function get_archive_page_id( $before ) {
+		$slug = $this->get_archive_page_slug( $before );
 		return $slug ? get_page_by_path( $slug, OBJECT, $this->post_type ) : 0;
 	}
 
@@ -535,14 +669,16 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
+	 * @param bool $before If before or after content.
+	 *
 	 * @return string
 	 */
-	function get_archive_page_slug() {
+	function get_archive_page_slug( $before ) {
 		$slug = '';
 		if ( $this->is_taxonomy() ) {
-			$slug = $this->get_archive_term_slug( get_queried_object_id() );
+			$slug = $this->get_archive_term_slug( get_queried_object_id(), $before );
 		} elseif ( $this->is_post_type() ) {
-			$slug = $this->get_archive_post_type_slug( get_post_type() );
+			$slug = $this->get_archive_post_type_slug( get_post_type(), $before );
 		}
 		return $slug;
 	}
@@ -552,13 +688,14 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param string The post type name.
+	 * @param string $post_type The post type name.
+	 * @param bool   $before    If before or after content.
 	 *
 	 * @return string
 	 */
-	function get_post_type_title( $post_type ) {
+	function get_post_type_title( $post_type, $before ) {
 		$post_type = get_post_type_object( $post_type );
-		return $this->get_title( $post_type->label );
+		return $this->get_title( $post_type->label, '', $before );
 	}
 
 	/**
@@ -566,12 +703,13 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param string The post type name.
+	 * @param string $post_type The post type name.
+	 * @param bool   $before    If before or after content.
 	 *
 	 * @return string
 	 */
-	function get_archive_post_type_slug( $post_type) {
-		return $this->get_slug( 'post_type', $post_type );
+	function get_archive_post_type_slug( $post_type, $before ) {
+		return $this->get_slug( 'post_type', $post_type, $before );
 	}
 
 	/**
@@ -579,14 +717,15 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param int The term ID.
+	 * @param int  $term_id The term ID.
+	 * @param bool $before  If before or after content.
 	 *
 	 * @return string
 	 */
-	function get_term_title( $term_id ) {
+	function get_term_title( $term_id, $before ) {
 		$term     = get_term( $term_id );
 		$taxonomy = get_taxonomy( $term->taxonomy );
-		return $this->get_title( $term->name, $taxonomy->label );
+		return $this->get_title( $term->name, $taxonomy->label, $before );
 	}
 
 	/**
@@ -594,47 +733,52 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param int The term ID.
+	 * @param int  $term_id The term ID.
+	 * @param bool $before  If before or after content.
 	 *
 	 * @return string
 	 */
-	function get_archive_term_slug( $term_id ) {
-		return $this->get_slug( 'taxonomy', $term_id );
+	function get_archive_term_slug( $term_id, $before ) {
+		return $this->get_slug( 'taxonomy', $term_id, $before );
 	}
 
 	/**
 	 * Builds a title from values.
 	 *
-	 * {Post type label} [Archive]
-	 * {Term name} [{Taxonomy label}]
+	 * {Post type label} [Archive] - {Before/After}
+	 * {Term name} [{Taxonomy label}] - {Before/After}
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param $name  The content name.
-	 * @param $label The content label.
+	 * @param string $name   The content name.
+	 * @param string $label  The content label.
+	 * @param bool   $before If before or after content.
 	 *
 	 * @return string
 	 */
-	function get_title( $name, $label = '' ) {
-		$label = $label ?: __( 'Archive', 'mai-archive-pages' );
-		return sprintf( '%s [%s]', $name, $label );
+	function get_title( $name, $label = '', $before ) {
+		$label  = $label ?: __( 'Archive', 'mai-archive-pages' );
+		$append = $before ? __( 'Before', 'mai-archive-pages' ) : __( 'After', 'mai-archive-pages' );
+		return sprintf( '%s [%s] - %s', $name, $label, $append );
 	}
 
 	/**
 	 * Builds a slug name from the content type and content name.
 	 *
-	 * mai_post_type_{post_type_name}
-	 * mai_taxonomy_{term_id}
+	 * mai_post_type_{post_type_name}  or  mai_post_type_after_{post_type_name}
+	 * mai_taxonomy_{term_id}          or  mai_taxonomy_{term_id}
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param string     $type The content type, 'post_type' or 'taxonomy'.
-	 * @param string|int $id           The content name or id, either post type name or term id.
+	 * @param string     $type   The content type, 'post_type' or 'taxonomy'.
+	 * @param string|int $id     The content name or id, either post type name or term id.
+	 * @param bool       $before If before or after content.
 	 *
 	 * @return string
 	 */
-	function get_slug( $type, $id ) {
-		return sprintf( '%s_%s_%s', $this->prefix, $type, $id );
+	function get_slug( $type, $id, $before ) {
+		$append = $before ? '' : '_after';
+		return sprintf( '%s_%s%s_%s', $this->prefix, $type, $append, $id );
 	}
 
 	/**
@@ -645,7 +789,12 @@ class Mai_Archive_Pages {
 	 * @return bool
 	 */
 	function is_post_type() {
-		return is_home() || is_post_type_archive();
+		static $post_type = null;
+		if ( ! is_null( $post_type ) ) {
+			return $post_type;
+		}
+		$post_type = is_home() || is_post_type_archive();
+		return $post_type;
 	}
 
 	/**
@@ -656,7 +805,12 @@ class Mai_Archive_Pages {
 	 * @return bool
 	 */
 	function is_taxonomy() {
-		return is_category() || is_tag() || is_tax();
+		static $taxonomy = null;
+		if ( ! is_null( $taxonomy ) ) {
+			return $taxonomy;
+		}
+		$taxonomy = is_category() || is_tag() || is_tax();
+		return $taxonomy;
 	}
 
 	/**
