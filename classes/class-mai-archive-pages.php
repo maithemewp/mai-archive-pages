@@ -43,15 +43,16 @@ class Mai_Archive_Pages {
 		$this->post_type = 'mai_archive_page';
 		$this->prefix    = 'mai';
 
-		add_action( 'admin_bar_menu',               [ $this, 'admin_bar_link_front' ], 99 );
-		add_action( 'admin_bar_menu',               [ $this, 'admin_bar_link_back' ], 99 );
-		add_action( 'load-edit.php',                [ $this, 'load_archive_pages' ] );
-		add_action( 'load-term.php',                [ $this, 'load_term_edit' ] );
-		add_action( 'genesis_loop',                 [ $this, 'do_content_before' ], 5 );
-		add_action( 'genesis_loop',                 [ $this, 'do_content_after' ], 15 );
-		// add_action( 'woocommerce_before_shop_loop', [ $this, 'do_content_before' ], 12 );
-		add_action( 'delete_term',                  [ $this, 'delete_archive_page' ] );
-		add_filter( 'post_type_link',               [ $this, 'permalink' ], 10, 2 );
+		add_action( 'admin_bar_menu',                  [ $this, 'admin_bar_link_front' ], 99 );
+		add_action( 'admin_bar_menu',                  [ $this, 'admin_bar_link_back' ], 99 );
+		add_action( 'load-edit.php',                   [ $this, 'load_archive_pages' ] );
+		add_action( 'load-term.php',                   [ $this, 'load_term_edit' ] );
+		add_action( 'genesis_loop',                    [ $this, 'do_content_before' ], 5 );
+		add_action( 'genesis_loop',                    [ $this, 'do_content_after' ], 15 );
+		add_action( 'woocommerce_archive_description', [ $this, 'do_shop_content_before' ], 12 );
+		add_action( 'woocommerce_after_main_content',  [ $this, 'do_shop_content_after' ], 12 );
+		add_action( 'delete_term',                     [ $this, 'delete_archive_page' ] );
+		add_filter( 'post_type_link',                  [ $this, 'permalink' ], 10, 2 );
 	}
 
 	/**
@@ -103,7 +104,7 @@ class Mai_Archive_Pages {
 				$parent = 'cpt-archive-settings';
 			}
 			// If Woo Shop page.
-			elseif ( class_exists( 'WooCommerce' ) && is_shop() ) {
+			elseif ( $this->is_shop() ) {
 				$parent = 'mai-woocommerce-shop-page';
 			}
 			// Any other post type.
@@ -416,6 +417,14 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content_before() {
+		if ( ! ( $this->is_post_type() || $this->is_taxonomy() ) ) {
+			return;
+		}
+
+		if ( $this->is_shop() ) {
+			return;
+		}
+
 		$this->do_content( true );
 	}
 
@@ -427,6 +436,44 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content_after() {
+		if ( ! ( $this->is_post_type() || $this->is_taxonomy() ) ) {
+			return;
+		}
+
+		if ( $this->is_shop() ) {
+			return;
+		}
+
+		$this->do_content( false );
+	}
+
+	/**
+	 * Output the archive page content.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	function do_shop_content_before() {
+		if ( ! ( $this->is_post_type() && $this->is_shop() ) ) {
+			return;
+		}
+
+		$this->do_content( true );
+	}
+
+	/**
+	 * Output the archive page content.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	function do_shop_content_after() {
+		if ( ! ( $this->is_post_type() && $this->is_shop() ) ) {
+			return;
+		}
+
 		$this->do_content( false );
 	}
 
@@ -440,10 +487,6 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content( $before ) {
-		if ( ! ( $this->is_post_type() || $this->is_taxonomy() ) ) {
-			return;
-		}
-
 		$slug = '';
 
 		if ( $this->is_taxonomy() && ! is_paged() ) {
@@ -779,6 +822,22 @@ class Mai_Archive_Pages {
 	function get_slug( $type, $id, $before ) {
 		$append = $before ? '' : '_after';
 		return sprintf( '%s_%s%s_%s', $this->prefix, $type, $append, $id );
+	}
+
+	/**
+	 * Checks if current page is the WooCommerce Shop page.
+	 *
+	 * @since TBD
+	 *
+	 * @return bool
+	 */
+	function is_shop() {
+		static $shop = null;
+		if ( ! is_null( $shop ) ) {
+			return $shop;
+		}
+		$shop = class_exists( 'WooCommerce' ) && function_exists( 'is_shop' ) && is_shop();
+		return $shop;
 	}
 
 	/**
