@@ -93,10 +93,15 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function add_admin_bar_link_front( $wp_admin_bar, $before ) {
-		$link_title = $before ? __( 'Edit Content Before', 'mai-archive-pages' ) : __( 'Edit Content After', 'mai-archive-pages' );
-		$page_id    = $this->get_archive_page_id( $before );
-		$node_id    = $before ? 'mai-archive-page-before' : 'mai-archive-page-after';
-		$parent     = 'edit';
+		$page_id = $this->get_archive_page_id( $before );
+		$node_id = $before ? 'mai-archive-page-before' : 'mai-archive-page-after';
+		$parent  = 'edit';
+
+		if ( $page_id ) {
+			$link_title = $before ? __( 'Edit Content Before', 'mai-archive-pages' ) : __( 'Edit Content After', 'mai-archive-pages' );
+		} else {
+			$link_title = $before ? __( 'Add Content Before', 'mai-archive-pages' ) : __( 'Add Content After', 'mai-archive-pages' );
+		}
 
 		if ( is_post_type_archive() ) {
 			// If has Genesis CPT archives settings.
@@ -114,9 +119,15 @@ class Mai_Archive_Pages {
 				static $has_parent_node = false;
 
 				if ( ! $has_parent_node ) {
+					if ( $page_id ) {
+						$parent_title = __( 'Edit Archive Content', 'mai-archive-pages' );
+					} else {
+						$parent_title = __( 'Add Archive Content', 'mai-archive-pages' );
+					}
+
 					$wp_admin_bar->add_node( [
 						'id'     => $parent,
-						'title'  => '<span class="ab-icon dashicons dashicons-edit" style="margin-top:2px;"></span><span class="ab-label">' . __( 'Edit Archive Content', 'mai-archive-pages' ) . '</span>',
+						'title'  => sprintf( '<span class="ab-icon dashicons dashicons-edit" style="margin-top:2px;"></span><span class="ab-label">%s</span>', $parent_title ),
 						'href'   => '#',
 					] );
 
@@ -337,19 +348,19 @@ class Mai_Archive_Pages {
 	 */
 	function get_edit_archive_button( $term, $slug, $before ) {
 		$existing = get_page_by_path( $slug, OBJECT, $this->post_type );
+		$append   = $before ? __( 'Before', 'mai-archive-pages' ) : __( 'After', 'mai-archive-pages' );
 
 		if ( $existing ) {
 			$link = get_edit_post_link( $existing, false );
+			$text = sprintf( '%s %s', __( 'Edit Archive Content', 'mai-archive-pages' ), $append );
 		} else {
 			$link = $this->get_create_new_archive_page_url( $term->term_id, 'taxonomy', $before );
+			$text = sprintf( '%s %s', __( 'Add Archive Content', 'mai-archive-pages' ), $append );
 		}
 
 		if ( ! $link ) {
 			return;
 		}
-
-		$append = $before ? __( 'Before', 'mai-archive-pages' ) : __( 'After', 'mai-archive-pages' );
-		$text   = sprintf( '%s %s', __( 'Edit Archive Content', 'mai-archive-pages' ), $append );
 
 		return sprintf( '<a href="%s" class="button button-secondary" style="margin-right:12px;"><span class="dashicons dashicons-edit" style="margin-top:4px;margin-left:-4px;"></span> %s</a>', $link, $text );
 	}
