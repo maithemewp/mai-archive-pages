@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.0 (5/21/21)
+* Added: Support for PHP 8.
+
 ## 1.1.1 (4/14/21)
 * Changed: Use "Add Archive Content" verbiage if content does not exist, and "Edit Archive Content" if content does exist.
 
