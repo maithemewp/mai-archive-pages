@@ -810,7 +810,7 @@ class Mai_Archive_Pages {
 	 *
 	 * @return string
 	 */
-	function get_title( $name, $label = '', $before ) {
+	function get_title( $name, $label, $before ) {
 		$label  = $label ?: __( 'Archive', 'mai-archive-pages' );
 		$append = $before ? __( 'Before', 'mai-archive-pages' ) : __( 'After', 'mai-archive-pages' );
 		return sprintf( '%s [%s] - %s', $name, $label, $append );
