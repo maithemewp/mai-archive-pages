@@ -2,9 +2,9 @@
 
 /**
  * Plugin Name:     Mai Archive Pages
- * Plugin URI:      https://bizbudding.com/products/mai-archive-pages/
+ * Plugin URI:      https://bizbudding.com/mai-design-pack/
  * Description:     Build robust and SEO-friendly archive pages with blocks.
- * Version:         1.2.0
+ * Version:         1.2.1
  *
  * Author:          BizBudding
  * Author URI:      https://bizbudding.com
@@ -87,10 +87,9 @@ final class Mai_Archive_Pages_Plugin {
 	 * @return  void
 	 */
 	private function setup_constants() {
-
 		// Plugin version.
 		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.2.0' );
+			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.2.1' );
 		}
 
 		// Plugin Folder Path.
@@ -147,7 +146,6 @@ final class Mai_Archive_Pages_Plugin {
 	 * @return  void
 	 */
 	public function hooks() {
-
 		add_action( 'admin_init', [ $this, 'updater' ] );
 		add_action( 'init',       [ $this, 'register_content_types' ] );
 		add_action( 'init',       [ $this, 'init' ] );
@@ -166,7 +164,6 @@ final class Mai_Archive_Pages_Plugin {
 	 * @return  void
 	 */
 	public function updater() {
-
 		// Bail if current user cannot manage plugins.
 		if ( ! current_user_can( 'install_plugins' ) ) {
 			return;
@@ -254,7 +251,6 @@ final class Mai_Archive_Pages_Plugin {
 		$this->register_content_types();
 		flush_rewrite_rules();
 	}
-
 }
 
 /**
@@ -272,9 +268,9 @@ final class Mai_Archive_Pages_Plugin {
  *
  * @return object|Mai_Archive_Pages_Plugin The one true Mai_Archive_Pages_Plugin Instance.
  */
-function Mai_Archive_Pages_Plugin() {
+function mai_archive_pages_plugin() {
 	return Mai_Archive_Pages_Plugin::instance();
 }
 
 // Get Mai_Archive_Pages_Plugin Running.
-Mai_Archive_Pages_Plugin();
+mai_archive_pages_plugin();
