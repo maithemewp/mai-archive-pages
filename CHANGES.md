@@ -1,7 +1,7 @@
 # Changelog
 
 ## 1.2.2 (4/30/22)
-* Fixed: `get_post_type()` was return false in some scenarios so archive content would not display.
+* Fixed: `get_post_type()` was returning false in some scenarios so archive content would not display.
 
 ## 1.2.1 (1/20/22)
 * Fixed: Plugin url, file security, and function name coding standards.
