@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2 (TBD)
+* Fixed: `get_post_type()` was return false in some scenarios so archive content would not display.
+
+## 1.2.1 (1/20/22)
+* Fixed: Plugin url, file security, and function name coding standards.
+
 ## 1.2.0 (5/21/21)
 * Added: Support for PHP 8.
 

@@ -13,6 +13,9 @@
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// Must be at the top of the file.
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
 /**
  * Main Mai_Archive_Pages_Plugin Class.
  *
@@ -146,9 +149,9 @@ final class Mai_Archive_Pages_Plugin {
 	 * @return  void
 	 */
 	public function hooks() {
-		add_action( 'admin_init', [ $this, 'updater' ] );
-		add_action( 'init',       [ $this, 'register_content_types' ] );
-		add_action( 'init',       [ $this, 'init' ] );
+		add_action( 'plugins_loaded', [ $this, 'updater' ], 12 );
+		add_action( 'init',           [ $this, 'register_content_types' ] );
+		add_action( 'init',           [ $this, 'init' ] );
 
 		register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
@@ -164,18 +167,13 @@ final class Mai_Archive_Pages_Plugin {
 	 * @return  void
 	 */
 	public function updater() {
-		// Bail if current user cannot manage plugins.
-		if ( ! current_user_can( 'install_plugins' ) ) {
-			return;
-		}
-
 		// Bail if plugin updater is not loaded.
-		if ( ! class_exists( 'Puc_v4_Factory' ) ) {
+		if ( ! class_exists( 'YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
 			return;
 		}
 
 		// Setup the updater.
-		$updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/maithemewp/mai-archive-pages/', __FILE__, 'mai-archive-pages' );
+		$updater = PucFactory::buildUpdateChecker( 'https://github.com/maithemewp/mai-archive-pages/', __FILE__, 'mai-archive-pages' );
 
 		// Maybe set github api token.
 		if ( defined( 'MAI_GITHUB_API_TOKEN' ) ) {
