@@ -504,13 +504,12 @@ class Mai_Archive_Pages {
 		$slug = '';
 
 		if ( $this->is_taxonomy() && ! is_paged() ) {
-
 			$term = get_queried_object();
 			$slug = $term ? $this->get_archive_term_slug( $term->term_id, $before ) : '';
 
 		} elseif ( $this->is_post_type() && ! is_paged() ) {
-
-			$slug = $this->get_archive_post_type_slug( get_post_type(), $before );
+			$type = get_queried_object();
+			$slug = $type ? $this->get_archive_post_type_slug( $type->name, $before ) : '';
 		}
 
 		if ( ! $slug ) {
