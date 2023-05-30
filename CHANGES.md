@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.2 (TBD)
+## 1.2.2 (4/30/22)
 * Fixed: `get_post_type()` was return false in some scenarios so archive content would not display.
 
 ## 1.2.1 (1/20/22)
