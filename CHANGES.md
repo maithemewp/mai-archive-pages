@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.2.2 (4/30/22)
+## 1.2.3 (6/05/23)
+* Added: Support for PHP 8.1.
+* Fixed: Revert and fix `get_post_type()` again.
+
+## 1.2.2 (5/30/23)
 * Fixed: `get_post_type()` was returning false in some scenarios so archive content would not display.
 
 ## 1.2.1 (1/20/22)

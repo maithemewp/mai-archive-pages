@@ -390,12 +390,13 @@ class Mai_Archive_Pages {
 			return;
 		}
 
-		if ( 'new' !== filter_input( INPUT_GET, 'maiap', FILTER_SANITIZE_STRING ) ) {
+		$maiap = isset( $_GET['maiap'] ) ? sanitize_key( $_GET['maiap'] ) : '';
+		$title = isset( $_GET['maiap_title'] ) ? esc_html( $_GET['maiap_title'] ) : '';
+		$slug  = isset( $_GET['maiap_slug'] ) ? esc_html( $_GET['maiap_slug'] ) : '';
+
+		if ( 'new' !== $maiap ) {
 			return;
 		}
-
-		$title = filter_input( INPUT_GET, 'maiap_title', FILTER_SANITIZE_STRING );
-		$slug  = filter_input( INPUT_GET, 'maiap_slug', FILTER_SANITIZE_STRING );
 
 		if ( ! ( $title && $slug ) ) {
 			return;
@@ -508,8 +509,8 @@ class Mai_Archive_Pages {
 			$slug = $term ? $this->get_archive_term_slug( $term->term_id, $before ) : '';
 
 		} elseif ( $this->is_post_type() && ! is_paged() ) {
-			$type = get_queried_object();
-			$slug = $type ? $this->get_archive_post_type_slug( $type->name, $before ) : '';
+			$type = is_home() ? 'post' : get_post_type();
+			$slug = $type ? $this->get_archive_post_type_slug( $type, $before ) : '';
 		}
 
 		if ( ! $slug ) {
