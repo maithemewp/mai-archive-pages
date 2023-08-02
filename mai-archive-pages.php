@@ -4,7 +4,7 @@
  * Plugin Name:     Mai Archive Pages
  * Plugin URI:      https://bizbudding.com/mai-design-pack/
  * Description:     Build robust and SEO-friendly archive pages with blocks.
- * Version:         1.2.3
+ * Version:         1.3.0
  *
  * Author:          BizBudding
  * Author URI:      https://bizbudding.com
@@ -92,18 +92,18 @@ final class Mai_Archive_Pages_Plugin {
 	private function setup_constants() {
 		// Plugin version.
 		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.2.3' );
+			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.3.0' );
 		}
 
 		// Plugin Folder Path.
-		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_DIR' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_DIR' ) ) {
+			define( 'MAI_ARCHIVE_PAGES_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 		}
 
 		// Plugin Includes Path.
-		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_CLASSES_DIR' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_CLASSES_DIR', MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_DIR . 'classes/' );
-		}
+		// if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_CLASSES_DIR' ) ) {
+		// 	define( 'MAI_ARCHIVE_PAGES_PLUGIN_CLASSES_DIR', MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_DIR . 'classes/' );
+		// }
 
 		// Plugin Includes Path.
 		// if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_INCLUDES_DIR' ) ) {
@@ -111,13 +111,13 @@ final class Mai_Archive_Pages_Plugin {
 		// }
 
 		// Plugin Folder URL.
-		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_URL' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_URL' ) ) {
+			define( 'MAI_ARCHIVE_PAGES_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 		}
 
 		// Plugin Root File.
-		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_FILE' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_PLUGIN_FILE', __FILE__ );
+		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_FILE' ) ) {
+			define( 'MAI_ARCHIVE_PAGES_PLUGIN_FILE', __FILE__ );
 		}
 
 		// Plugin Base Name
@@ -136,10 +136,10 @@ final class Mai_Archive_Pages_Plugin {
 	private function includes() {
 		// Include vendor libraries.
 		require_once __DIR__ . '/vendor/autoload.php';
-		// Classes.
-		foreach ( glob( MAI_ARCHIVE_PAGES_PLUGIN_CLASSES_DIR . '*.php' ) as $file ) { include $file; }
 		// Includes.
-		// foreach ( glob( MAI_ARCHIVE_PAGES_PLUGIN_INCLUDES_DIR . '*.php' ) as $file ) { include $file; }
+		foreach ( glob( MAI_ARCHIVE_PAGES_PLUGIN_DIR . 'includes/*.php' ) as $file ) { include $file; }
+		// Classes.
+		foreach ( glob( MAI_ARCHIVE_PAGES_PLUGIN_DIR . 'classes/*.php' ) as $file ) { include $file; }
 	}
 
 	/**

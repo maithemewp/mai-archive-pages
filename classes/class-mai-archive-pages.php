@@ -77,7 +77,7 @@ class Mai_Archive_Pages {
 			return;
 		}
 
-		if ( ! ( $this->is_taxonomy() || $this->is_post_type() ) ) {
+		if ( ! ( maiap_is_taxonomy() || maiap_is_post_type() ) ) {
 			return;
 		}
 
@@ -112,7 +112,7 @@ class Mai_Archive_Pages {
 				$parent = 'cpt-archive-settings';
 			}
 			// If Woo Shop page.
-			elseif ( $this->is_shop() ) {
+			elseif ( maiap_is_shop() ) {
 				$parent = 'mai-woocommerce-shop-page';
 			}
 			// Any other post type.
@@ -152,7 +152,7 @@ class Mai_Archive_Pages {
 
 		$type = $id = '';
 
-		if ( $this->is_taxonomy() ) {
+		if ( maiap_is_taxonomy() ) {
 			$type = 'taxonomy';
 			$id   = get_queried_object_id();
 
@@ -160,7 +160,7 @@ class Mai_Archive_Pages {
 				return;
 			}
 
-		} elseif ( $this->is_post_type() ) {
+		} elseif ( maiap_is_post_type() ) {
 			$type = 'post_type';
 			$id   = get_post_type();
 
@@ -205,11 +205,11 @@ class Mai_Archive_Pages {
 		switch ( $type ) {
 			case 'taxonomy':
 				$title = $this->get_term_title( $id, $before );
-				$slug  = $this->get_archive_term_slug( $id, $before );
+				$slug  = maiap_get_archive_term_slug( $id, $before );
 			break;
 			case 'post_type':
 				$title = $this->get_post_type_title( $id, $before );
-				$slug  = $this->get_archive_post_type_slug( $id, $before );
+				$slug  = maiap_get_archive_post_type_slug( $id, $before );
 			break;
 			default:
 				$title = '';
@@ -307,8 +307,8 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function add_edit_archive_buttons( $term, $taxonomy ) {
-		$before_slug = $this->get_archive_term_slug( $term->term_id, true );
-		$after_slug  = $this->get_archive_term_slug( $term->term_id, false );
+		$before_slug = maiap_get_archive_term_slug( $term->term_id, true );
+		$after_slug  = maiap_get_archive_term_slug( $term->term_id, false );
 
 		if ( ! ( $before_slug || $after_slug ) ) {
 			return;
@@ -432,11 +432,11 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content_before() {
-		if ( ! ( $this->is_post_type() || $this->is_taxonomy() ) ) {
+		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
 			return;
 		}
 
-		if ( $this->is_shop() ) {
+		if ( maiap_is_shop() ) {
 			return;
 		}
 
@@ -451,11 +451,11 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content_after() {
-		if ( ! ( $this->is_post_type() || $this->is_taxonomy() ) ) {
+		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
 			return;
 		}
 
-		if ( $this->is_shop() ) {
+		if ( maiap_is_shop() ) {
 			return;
 		}
 
@@ -470,7 +470,7 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_shop_content_before() {
-		if ( ! ( $this->is_post_type() && $this->is_shop() ) ) {
+		if ( ! ( maiap_is_post_type() && maiap_is_shop() ) ) {
 			return;
 		}
 
@@ -485,7 +485,7 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_shop_content_after() {
-		if ( ! ( $this->is_post_type() && $this->is_shop() ) ) {
+		if ( ! ( maiap_is_post_type() && maiap_is_shop() ) ) {
 			return;
 		}
 
@@ -502,22 +502,7 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content( $before ) {
-		$slug = '';
-
-		if ( $this->is_taxonomy() && ! is_paged() ) {
-			$term = get_queried_object();
-			$slug = $term ? $this->get_archive_term_slug( $term->term_id, $before ) : '';
-
-		} elseif ( $this->is_post_type() && ! is_paged() ) {
-			$type = is_home() ? 'post' : get_post_type();
-			$slug = $type ? $this->get_archive_post_type_slug( $type, $before ) : '';
-		}
-
-		if ( ! $slug ) {
-			return;
-		}
-
-		$post = get_page_by_path( $slug, OBJECT, 'mai_archive_page' );
+		$post = maiap_get_archive_page( $before );
 
 		if ( ! $post ) {
 			return;
@@ -569,8 +554,8 @@ class Mai_Archive_Pages {
 	 */
 	function delete_archive_page( $term_id ) {
 		$slugs = [
-			$this->get_archive_term_slug( $term_id, true ),
-			$this->get_archive_term_slug( $term_id, false ),
+			maiap_get_archive_term_slug( $term_id, true ),
+			maiap_get_archive_term_slug( $term_id, false ),
 		];
 
 		if ( ! $slugs ) {
@@ -579,9 +564,11 @@ class Mai_Archive_Pages {
 
 		foreach ( $slugs as $slug ) {
 			$page = get_page_by_path( $slug, OBJECT, $this->post_type );
+
 			if ( ! $page ) {
 				continue;
 			}
+
 			wp_delete_post( $page->ID );
 		}
 	}
@@ -714,11 +701,15 @@ class Mai_Archive_Pages {
 	 *
 	 * @since 0.1.0
 	 *
+	 * @param bool $before If before or after content.
+	 *
 	 * @return int
 	 */
 	function get_archive_page_id( $before ) {
 		$slug = $this->get_archive_page_slug( $before );
-		return $slug ? get_page_by_path( $slug, OBJECT, $this->post_type ) : 0;
+		$page = $slug ? get_page_by_path( $slug, OBJECT, $this->post_type ) : false;
+
+		return $page ? $page->ID : 0;
 	}
 
 	/**
@@ -732,11 +723,13 @@ class Mai_Archive_Pages {
 	 */
 	function get_archive_page_slug( $before ) {
 		$slug = '';
-		if ( $this->is_taxonomy() ) {
-			$slug = $this->get_archive_term_slug( get_queried_object_id(), $before );
-		} elseif ( $this->is_post_type() ) {
-			$slug = $this->get_archive_post_type_slug( get_post_type(), $before );
+
+		if ( maiap_is_taxonomy() ) {
+			$slug = maiap_get_archive_term_slug( get_queried_object_id(), $before );
+		} elseif ( maiap_is_post_type() ) {
+			$slug = maiap_get_archive_post_type_slug( get_post_type(), $before );
 		}
+
 		return $slug;
 	}
 
@@ -752,21 +745,8 @@ class Mai_Archive_Pages {
 	 */
 	function get_post_type_title( $post_type, $before ) {
 		$post_type = get_post_type_object( $post_type );
-		return $this->get_title( $post_type->label, '', $before );
-	}
 
-	/**
-	 * Builds a post type archive slug from the post type name.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param string $post_type The post type name.
-	 * @param bool   $before    If before or after content.
-	 *
-	 * @return string
-	 */
-	function get_archive_post_type_slug( $post_type, $before ) {
-		return $this->get_slug( 'post_type', $post_type, $before );
+		return $this->get_title( $post_type->label, '', $before );
 	}
 
 	/**
@@ -782,21 +762,8 @@ class Mai_Archive_Pages {
 	function get_term_title( $term_id, $before ) {
 		$term     = get_term( $term_id );
 		$taxonomy = get_taxonomy( $term->taxonomy );
-		return $this->get_title( $term->name, $taxonomy->label, $before );
-	}
 
-	/**
-	 * Builds a term slug from the term ID.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param int  $term_id The term ID.
-	 * @param bool $before  If before or after content.
-	 *
-	 * @return string
-	 */
-	function get_archive_term_slug( $term_id, $before ) {
-		return $this->get_slug( 'taxonomy', $term_id, $before );
+		return $this->get_title( $term->name, $taxonomy->label, $before );
 	}
 
 	/**
@@ -816,74 +783,8 @@ class Mai_Archive_Pages {
 	function get_title( $name, $label, $before ) {
 		$label  = $label ?: __( 'Archive', 'mai-archive-pages' );
 		$append = $before ? __( 'Before', 'mai-archive-pages' ) : __( 'After', 'mai-archive-pages' );
+
 		return sprintf( '%s [%s] - %s', $name, $label, $append );
-	}
-
-	/**
-	 * Builds a slug name from the content type and content name.
-	 *
-	 * mai_post_type_{post_type_name}  or  mai_post_type_after_{post_type_name}
-	 * mai_taxonomy_{term_id}          or  mai_taxonomy_{term_id}
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param string     $type   The content type, 'post_type' or 'taxonomy'.
-	 * @param string|int $id     The content name or id, either post type name or term id.
-	 * @param bool       $before If before or after content.
-	 *
-	 * @return string
-	 */
-	function get_slug( $type, $id, $before ) {
-		$append = $before ? '' : '_after';
-		return sprintf( '%s_%s%s_%s', $this->prefix, $type, $append, $id );
-	}
-
-	/**
-	 * Checks if current page is the WooCommerce Shop page.
-	 *
-	 * @since TBD
-	 *
-	 * @return bool
-	 */
-	function is_shop() {
-		static $shop = null;
-		if ( ! is_null( $shop ) ) {
-			return $shop;
-		}
-		$shop = class_exists( 'WooCommerce' ) && function_exists( 'is_shop' ) && is_shop();
-		return $shop;
-	}
-
-	/**
-	 * Checks if current page is a post type archive.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @return bool
-	 */
-	function is_post_type() {
-		static $post_type = null;
-		if ( ! is_null( $post_type ) ) {
-			return $post_type;
-		}
-		$post_type = is_home() || is_post_type_archive();
-		return $post_type;
-	}
-
-	/**
-	 * Checks if current page is a taxonomy archive.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @return bool
-	 */
-	function is_taxonomy() {
-		static $taxonomy = null;
-		if ( ! is_null( $taxonomy ) ) {
-			return $taxonomy;
-		}
-		$taxonomy = is_category() || is_tag() || is_tax();
-		return $taxonomy;
 	}
 
 	/**

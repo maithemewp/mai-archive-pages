@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.3.0 (8/2/23)
+* Added: [Developers] Moved class methods to helper functions for more flexibility.
+
 ## 1.2.3 (6/05/23)
 * Added: Support for PHP 8.1.
 * Fixed: Revert and fix `get_post_type()` again.
