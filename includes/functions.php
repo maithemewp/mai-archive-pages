@@ -3,7 +3,7 @@
 /**
  * Output the archive page content.
  *
- * @since TBD
+ * @since 1.3.0
  *
  * @param bool $before If before or after content.
  *
@@ -31,7 +31,7 @@ function maiap_get_archive_page( $before ) {
 /**
  * Checks if current page is the WooCommerce Shop page.
  *
- * @since TBD
+ * @since 1.3.0
  *
  * @return bool
  */
@@ -50,7 +50,7 @@ function maiap_is_shop() {
 /**
  * Checks if current page is a post type archive.
  *
- * @since TBD
+ * @since 1.3.0
  *
  * @return bool
  */
@@ -69,7 +69,7 @@ function maiap_is_post_type() {
 /**
  * Checks if current page is a taxonomy archive.
  *
- * @since TBD
+ * @since 1.3.0
  *
  * @return bool
  */
@@ -88,7 +88,9 @@ function maiap_is_taxonomy() {
 /**
  * Builds a term slug from the term ID.
  *
- * @since 0.1.0
+ * @access private
+ *
+ * @since 1.3.0
  *
  * @param int  $term_id The term ID.
  * @param bool $before  If before or after content.
@@ -102,7 +104,9 @@ function maiap_get_archive_term_slug( $term_id, $before ) {
 /**
  * Builds a post type archive slug from the post type name.
  *
- * @since 0.1.0
+ * @access private
+ *
+ * @since 1.3.0
  *
  * @param string $post_type The post type name.
  * @param bool   $before    If before or after content.
@@ -119,7 +123,9 @@ function maiap_get_archive_post_type_slug( $post_type, $before ) {
  * mai_post_type_{post_type_name}  or  mai_post_type_after_{post_type_name}
  * mai_taxonomy_{term_id}          or  mai_taxonomy_{term_id}
  *
- * @since 0.1.0
+ * @access private
+ *
+ * @since 1.3.0
  *
  * @param string     $type   The content type, 'post_type' or 'taxonomy'.
  * @param string|int $id     The content name or id, either post type name or term id.
