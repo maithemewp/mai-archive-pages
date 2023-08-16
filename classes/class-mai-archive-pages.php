@@ -46,16 +46,16 @@ class Mai_Archive_Pages {
 		$this->post_type = 'mai_archive_page';
 		$this->prefix    = 'mai';
 
-		add_action( 'admin_bar_menu',                  [ $this, 'admin_bar_link_front' ], 99 );
-		add_action( 'admin_bar_menu',                  [ $this, 'admin_bar_link_back' ], 99 );
-		add_action( 'load-edit.php',                   [ $this, 'load_archive_pages' ] );
-		add_action( 'load-term.php',                   [ $this, 'load_term_edit' ] );
-		add_action( 'genesis_loop',                    [ $this, 'do_content_before' ], 5 );
-		add_action( 'genesis_loop',                    [ $this, 'do_content_after' ], 15 );
-		add_action( 'woocommerce_archive_description', [ $this, 'do_shop_content_before' ], 12 );
-		add_action( 'woocommerce_after_main_content',  [ $this, 'do_shop_content_after' ], 12 );
-		add_action( 'delete_term',                     [ $this, 'delete_archive_page' ] );
-		add_filter( 'post_type_link',                  [ $this, 'permalink' ], 10, 2 );
+		add_action( 'admin_bar_menu',                      [ $this, 'admin_bar_link_front' ], 99 );
+		add_action( 'admin_bar_menu',                      [ $this, 'admin_bar_link_back' ], 99 );
+		add_action( 'load-edit.php',                       [ $this, 'load_archive_pages' ] );
+		add_action( 'load-term.php',                       [ $this, 'load_term_edit' ] );
+		add_action( 'genesis_before_content_sidebar_wrap', [ $this, 'do_content_before' ], 20 );
+		add_action( 'genesis_loop',                        [ $this, 'do_content_after' ], 15 );
+		add_action( 'woocommerce_archive_description',     [ $this, 'do_shop_content_before' ], 12 );
+		add_action( 'woocommerce_after_main_content',      [ $this, 'do_shop_content_after' ], 12 );
+		add_action( 'delete_term',                         [ $this, 'delete_archive_page' ] );
+		add_filter( 'post_type_link',                      [ $this, 'permalink' ], 10, 2 );
 	}
 
 	/**
