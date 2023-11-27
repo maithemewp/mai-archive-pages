@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.3.1 (11/27/23)
+* Changed: Moves before content before content-sidebar-wrap element.
 * Changed: Updated updater.
 
 ## 1.3.0 (8/2/23)
