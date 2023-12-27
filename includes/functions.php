@@ -10,7 +10,14 @@
  * @return string|WP_Post
  */
 function maiap_get_archive_page( $before ) {
-	$slug = '';
+	static $cache = null;
+
+	if ( ! is_null( $cache ) && isset( $cache[ $before ] ) ) {
+		return $cache[ $before ];
+	}
+
+	$cache = ! is_array( $cache ) ? [] : $cache;
+	$slug  = '';
 
 	if ( maiap_is_taxonomy() && ! is_paged() ) {
 		$term = get_queried_object();
@@ -22,10 +29,13 @@ function maiap_get_archive_page( $before ) {
 	}
 
 	if ( ! $slug ) {
+		$cache[ $before ] = $slug;
 		return;
 	}
 
-	return get_page_by_path( $slug, OBJECT, 'mai_archive_page' );
+	$cache[ $before ] = get_page_by_path( $slug, OBJECT, 'mai_archive_page' );
+
+	return $cache[ $before ];
 }
 
 /**
