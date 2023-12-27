@@ -50,8 +50,10 @@ class Mai_Archive_Pages {
 		add_action( 'admin_bar_menu',                      [ $this, 'admin_bar_link_back' ], 99 );
 		add_action( 'load-edit.php',                       [ $this, 'load_archive_pages' ] );
 		add_action( 'load-term.php',                       [ $this, 'load_term_edit' ] );
-		add_action( 'genesis_before_content_sidebar_wrap', [ $this, 'do_content_before' ], 20 );
-		add_action( 'genesis_loop',                        [ $this, 'do_content_after' ], 15 );
+		add_action( 'genesis_before_content_sidebar_wrap', [ $this, 'do_content_outside_before' ], 20 );
+		add_action( 'genesis_loop',                        [ $this, 'do_content_inside_before' ], 5 );
+		add_action( 'genesis_loop',                        [ $this, 'do_content_inside_after' ], 15 );
+		add_action( 'genesis_after_content_sidebar_wrap',  [ $this, 'do_content_outside_after' ], 5 );
 		add_action( 'woocommerce_archive_description',     [ $this, 'do_shop_content_before' ], 12 );
 		add_action( 'woocommerce_after_main_content',      [ $this, 'do_shop_content_after' ], 12 );
 		add_action( 'delete_term',                         [ $this, 'delete_archive_page' ] );
@@ -425,18 +427,18 @@ class Mai_Archive_Pages {
 	}
 
 	/**
-	 * Output the archive page content.
+	 * Render the archive page content outside of the container.
 	 *
 	 * @since TBD
 	 *
 	 * @return void
 	 */
-	function do_content_before() {
+	function do_content_outside_before() {
 		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
 			return;
 		}
 
-		if ( maiap_is_shop() ) {
+		if ( 'outside' !== $this->get_content_location( true ) ) {
 			return;
 		}
 
@@ -444,18 +446,64 @@ class Mai_Archive_Pages {
 	}
 
 	/**
-	 * Output the archive page content.
+	 * Render the archive page content inside of the container.
 	 *
 	 * @since TBD
 	 *
 	 * @return void
 	 */
-	function do_content_after() {
+	function do_content_inside_before() {
 		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
 			return;
 		}
 
 		if ( maiap_is_shop() ) {
+			return;
+		}
+
+		if ( 'inside' !== $this->get_content_location( true ) ) {
+			return;
+		}
+
+		$this->do_content( true );
+	}
+
+	/**
+	 * Render the archive page content inside of the container.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	function do_content_inside_after() {
+		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
+			return;
+		}
+
+		if ( maiap_is_shop() ) {
+			return;
+		}
+
+		if ( 'inside' !== $this->get_content_location( false ) ) {
+			return;
+		}
+
+		$this->do_content( false );
+	}
+
+	/**
+	 * Render the archive page content outside of the container.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	function do_content_outside_after() {
+		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
+			return;
+		}
+
+		if ( 'outside' !== $this->get_content_location( false ) ) {
 			return;
 		}
 
@@ -474,6 +522,10 @@ class Mai_Archive_Pages {
 			return;
 		}
 
+		if ( 'outside' === $this->get_content_location( true ) ) {
+			return;
+		}
+
 		$this->do_content( true );
 	}
 
@@ -486,6 +538,10 @@ class Mai_Archive_Pages {
 	 */
 	function do_shop_content_after() {
 		if ( ! ( maiap_is_post_type() && maiap_is_shop() ) ) {
+			return;
+		}
+
+		if ( 'outside' === $this->get_content_location( false ) ) {
 			return;
 		}
 
@@ -541,6 +597,38 @@ class Mai_Archive_Pages {
 				]
 			]
 		);
+	}
+
+	/**
+	 * Gets content location, with fallback for sites prior to this setting being added.
+	 *
+	 *
+	 * @since TBD
+	 *
+	 * @param bool $before If before or after content.
+	 *
+	 * @return string
+	 */
+	function get_content_location( $before ) {
+		static $cache = null;
+
+		if ( ! is_null( $cache ) && isset( $cache[ $before ] ) ) {
+			return $cache[ $before ];
+		}
+
+		$cache = ! is_array( $cache ) ? [] : $cache;
+		$post  = maiap_get_archive_page( $before );
+
+		if ( ! $post ) {
+			$cache[ $before ] = '';
+			return;
+		}
+
+		// Get location, with fallback for sites prior to this setting being added.
+		$location         = get_post_meta( $post->ID, 'maiap_location', true );
+		$cache[ $before ] = $location ?: 'inside';
+
+		return $cache[ $before ];
 	}
 
 	/**
