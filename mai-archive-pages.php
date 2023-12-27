@@ -149,9 +149,11 @@ final class Mai_Archive_Pages_Plugin {
 	 * @return  void
 	 */
 	public function hooks() {
-		add_action( 'plugins_loaded', [ $this, 'updater' ], 12 );
-		add_action( 'init',           [ $this, 'register_content_types' ] );
-		add_action( 'init',           [ $this, 'init' ] );
+		add_action( 'plugins_loaded',                    [ $this, 'updater' ], 12 );
+		add_action( 'init',                              [ $this, 'register_content_types' ] );
+		add_action( 'acf/init',                          [ $this, 'register_field_group' ] );
+		add_filter( 'acf/load_field/key=maiap_location', [ $this, 'load_location_choices' ] );
+		add_action( 'init',                              [ $this, 'init' ] );
 
 		register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
@@ -229,6 +231,73 @@ final class Mai_Archive_Pages_Plugin {
 			'rewrite'            => false,
 			'supports'           => array( 'title', 'editor' ),
 		) );
+	}
+
+	/**
+	 * Registers field group.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	function register_field_group() {
+		if ( ! function_exists( 'acf_add_local_field_group' ) ) {
+			return;
+		}
+
+		acf_add_local_field_group(
+			[
+				'key'      => 'maiap_archive_page_field_group',
+				'title'    => __( 'Settings', 'mai-publisher' ),
+				'fields'   => [
+					[
+						'label'   => __( 'Locations Settings', 'mai-publisher' ),
+						'key'     => 'maiap_location',
+						'name'    => 'maiap_location',
+						'type'    => 'select',
+						'choices' => [],
+					],
+				],
+				'position' => 'side',
+				'location' => [
+					[
+						[
+							'param'    => 'post_type',
+							'operator' => '==',
+							'value'    => 'mai_archive_page',
+						],
+					],
+				],
+			]
+		);
+	}
+
+	/**
+	 * Loads location choices.
+	 *
+	 * @since TBD
+	 *
+	 * @param array $field The field data.
+	 *
+	 * @return array
+	 */
+	function load_location_choices( $field ) {
+		if ( ! is_admin() ) {
+			return $field;
+		}
+
+		global $post;
+
+		$after                  = str_contains( $post->post_name, '_after_' );
+		$before                 = ! $after;
+		$label                  = $before ? __( 'Before', 'mai-publisher' ) : __( 'After', 'mai-publisher' );
+		$field['default_value'] = $before ? 'inside' : 'outside';
+		$field['choices']       = [
+			'outside' => sprintf( '%s %s', $label, __( 'container (full width)', 'mai-publisher' ) ),
+			'inside'  => sprintf( '%s %s', $label, __( 'entries (contained)', 'mai-publisher' ) ),
+		];
+
+		return $field;
 	}
 
 	/**
