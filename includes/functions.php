@@ -138,7 +138,7 @@ function maiap_get_archive_post_type_slug( $post_type, $before ) {
  *
  * @access private
  *
- * @since TBD
+ * @since 1.4.0
  *
  * @param int  $author_id The author ID.
  * @param bool $before    If before or after content.
@@ -154,7 +154,7 @@ function maiap_get_archive_author_slug( $author_id, $before ) {
  *
  * @access private
  *
- * @since TBD
+ * @since 1.4.0
  *
  * @param string $slug   The search slug.
  * @param bool   $before If before or after content.
