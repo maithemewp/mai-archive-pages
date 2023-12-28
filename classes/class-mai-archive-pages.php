@@ -90,7 +90,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Adds an admin bar link.
 	 *
-	 * @since TBD
+	 * @since 0.1.0
 	 *
 	 * @param object $wp_admin_bar The admin bar object.
 	 * @param bool   $before       If before or after content.
@@ -350,7 +350,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Gets a button link to the term edit page.
 	 *
-	 * @since TBD
+	 * @since 0.1.0
 	 *
 	 * @param WP_Term $term The term you are editing.
 	 * @param string  $slug The slug of the existing post, if available.
@@ -436,7 +436,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Render the archive page content outside of the container.
 	 *
-	 * @since TBD
+	 * @since 1.4.0
 	 *
 	 * @return void
 	 */
@@ -455,7 +455,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Render the archive page content inside of the container.
 	 *
-	 * @since TBD
+	 * @since 1.4.0
 	 *
 	 * @return void
 	 */
@@ -478,7 +478,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Render the archive page content inside of the container.
 	 *
-	 * @since TBD
+	 * @since 1.4.0
 	 *
 	 * @return void
 	 */
@@ -501,7 +501,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Render the archive page content outside of the container.
 	 *
-	 * @since TBD
+	 * @since 1.4.0
 	 *
 	 * @return void
 	 */
@@ -520,7 +520,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Output the archive page content.
 	 *
-	 * @since TBD
+	 * @since 0.1.0
 	 *
 	 * @return void
 	 */
@@ -539,7 +539,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Output the archive page content.
 	 *
-	 * @since TBD
+	 * @since 0.1.0
 	 *
 	 * @return void
 	 */
@@ -610,7 +610,7 @@ class Mai_Archive_Pages {
 	 * Gets content location, with fallback for sites prior to this setting being added.
 	 *
 	 *
-	 * @since TBD
+	 * @since 1.4.0
 	 *
 	 * @param bool $before If before or after content.
 	 *
@@ -878,7 +878,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Builds an author archive title from the author ID.
 	 *
-	 * @since TBD
+	 * @since 1.4.0
 	 *
 	 * @param int  $author_id The author ID.
 	 * @param bool $before    If before or after content.
@@ -894,7 +894,7 @@ class Mai_Archive_Pages {
 	/**
 	 * Builds a search archive title from the author ID.
 	 *
-	 * @since TBD
+	 * @since 1.4.0
 	 *
 	 * @param string $slug   The search slug.
 	 * @param bool   $before If before or after content.
