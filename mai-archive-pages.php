@@ -4,7 +4,7 @@
  * Plugin Name:     Mai Archive Pages
  * Plugin URI:      https://bizbudding.com/mai-design-pack/
  * Description:     Build robust and SEO-friendly archive pages with blocks.
- * Version:         1.3.1
+ * Version:         1.4.0
  *
  * Author:          BizBudding
  * Author URI:      https://bizbudding.com
@@ -92,7 +92,7 @@ final class Mai_Archive_Pages_Plugin {
 	private function setup_constants() {
 		// Plugin version.
 		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.3.1' );
+			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.4.0' );
 		}
 
 		// Plugin Folder Path.
@@ -149,9 +149,11 @@ final class Mai_Archive_Pages_Plugin {
 	 * @return  void
 	 */
 	public function hooks() {
-		add_action( 'plugins_loaded', [ $this, 'updater' ], 12 );
-		add_action( 'init',           [ $this, 'register_content_types' ] );
-		add_action( 'init',           [ $this, 'init' ] );
+		add_action( 'plugins_loaded',                    [ $this, 'updater' ], 12 );
+		add_action( 'init',                              [ $this, 'register_content_types' ] );
+		add_action( 'acf/init',                          [ $this, 'register_field_group' ] );
+		add_filter( 'acf/load_field/key=maiap_location', [ $this, 'load_location_choices' ] );
+		add_action( 'init',                              [ $this, 'init' ] );
 
 		register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
@@ -229,6 +231,73 @@ final class Mai_Archive_Pages_Plugin {
 			'rewrite'            => false,
 			'supports'           => array( 'title', 'editor' ),
 		) );
+	}
+
+	/**
+	 * Registers field group.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @return void
+	 */
+	function register_field_group() {
+		if ( ! function_exists( 'acf_add_local_field_group' ) ) {
+			return;
+		}
+
+		acf_add_local_field_group(
+			[
+				'key'      => 'maiap_archive_page_field_group',
+				'title'    => __( 'Settings', 'mai-publisher' ),
+				'fields'   => [
+					[
+						'label'   => __( 'Locations Settings', 'mai-publisher' ),
+						'key'     => 'maiap_location',
+						'name'    => 'maiap_location',
+						'type'    => 'select',
+						'choices' => [],
+					],
+				],
+				'position' => 'side',
+				'location' => [
+					[
+						[
+							'param'    => 'post_type',
+							'operator' => '==',
+							'value'    => 'mai_archive_page',
+						],
+					],
+				],
+			]
+		);
+	}
+
+	/**
+	 * Loads location choices.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param array $field The field data.
+	 *
+	 * @return array
+	 */
+	function load_location_choices( $field ) {
+		if ( ! is_admin() ) {
+			return $field;
+		}
+
+		global $post;
+
+		$after                  = str_contains( $post->post_name, '_after_' );
+		$before                 = ! $after;
+		$label                  = $before ? __( 'Before', 'mai-publisher' ) : __( 'After', 'mai-publisher' );
+		$field['default_value'] = $before ? 'inside' : 'outside';
+		$field['choices']       = [
+			'outside' => sprintf( '%s %s', $label, __( 'container (full width)', 'mai-publisher' ) ),
+			'inside'  => sprintf( '%s %s', $label, __( 'entries (contained)', 'mai-publisher' ) ),
+		];
+
+		return $field;
 	}
 
 	/**

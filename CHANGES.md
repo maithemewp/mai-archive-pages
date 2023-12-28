@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0 (12/28/23)
+* Added: Support for author archives and search results pages.
+* Added: New setting to choose whether the content be inside the entries container or full width outside of the container.
+* Changed: Revert default before content to inside the content-sidebar-wrap.
+
 ## 1.3.1 (11/27/23)
 * Changed: Moves before content before content-sidebar-wrap element.
 * Changed: Updated updater.
