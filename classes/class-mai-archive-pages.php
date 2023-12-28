@@ -79,7 +79,7 @@ class Mai_Archive_Pages {
 			return;
 		}
 
-		if ( ! ( maiap_is_taxonomy() || maiap_is_post_type() ) ) {
+		if ( ! ( maiap_is_taxonomy() || maiap_is_post_type() || is_author() || is_search() ) ) {
 			return;
 		}
 
@@ -108,6 +108,8 @@ class Mai_Archive_Pages {
 			$link_title = $before ? __( 'Add Content Before', 'mai-archive-pages' ) : __( 'Add Content After', 'mai-archive-pages' );
 		}
 
+		static $has_parent_node = true;
+
 		if ( is_post_type_archive() ) {
 			// If has Genesis CPT archives settings.
 			if ( post_type_supports( get_post_type(), 'genesis-cpt-archives-settings' ) ) {
@@ -121,24 +123,27 @@ class Mai_Archive_Pages {
 			else {
 				$parent = 'mai-archive-page';
 
-				static $has_parent_node = false;
-
 				if ( ! $has_parent_node ) {
-					if ( $page_id ) {
-						$parent_title = __( 'Edit Archive Content', 'mai-archive-pages' );
-					} else {
-						$parent_title = __( 'Add Archive Content', 'mai-archive-pages' );
-					}
-
-					$wp_admin_bar->add_node( [
-						'id'     => $parent,
-						'title'  => sprintf( '<span class="ab-icon dashicons dashicons-edit" style="margin-top:2px;"></span><span class="ab-label">%s</span>', $parent_title ),
-						'href'   => '#',
-					] );
-
-					$has_parent_node = true;
+					$has_parent_node = false;
 				}
 			}
+		} elseif ( is_search() ) {
+			$parent          = 'mai-search-results';
+			$has_parent_node = false;
+		}
+
+		if ( ! $has_parent_node ) {
+			if ( $page_id ) {
+				$parent_title = __( 'Edit Archive Content', 'mai-archive-pages' );
+			} else {
+				$parent_title = __( 'Add Archive Content', 'mai-archive-pages' );
+			}
+
+			$wp_admin_bar->add_node( [
+				'id'     => $parent,
+				'title'  => sprintf( '<span class="ab-icon dashicons dashicons-edit" style="margin-top:2px;"></span><span class="ab-label">%s</span>', $parent_title ),
+				'href'   => '#',
+			] );
 		}
 
 		if ( $page_id ) {
@@ -169,6 +174,12 @@ class Mai_Archive_Pages {
 			if ( ! $id ) {
 				return;
 			}
+		} elseif ( is_author() ) {
+			$type = 'author';
+			$id   = (int) get_query_var( 'author' );
+		} elseif ( is_search() ) {
+			$type = 'search';
+			$id   = 'results';
 		}
 
 		if ( ! ( $type && $id ) ) {
@@ -212,6 +223,14 @@ class Mai_Archive_Pages {
 			case 'post_type':
 				$title = $this->get_post_type_title( $id, $before );
 				$slug  = maiap_get_archive_post_type_slug( $id, $before );
+			break;
+			case 'author':
+				$title = $this->get_author_title( $id, $before );
+				$slug  = maiap_get_archive_author_slug( $id, $before );
+			break;
+			case 'search':
+				$title = $this->get_search_title( __( 'Search', 'mai-archive-pages' ), $before );
+				$slug  = maiap_get_archive_search_slug( $id, $before );
 			break;
 			default:
 				$title = '';
@@ -259,19 +278,7 @@ class Mai_Archive_Pages {
 
 		$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
 		$slug    = get_post_field( 'post_name', $post_id );
-		$type    = $this->get_type_from_slug( $slug );
-		$id      = $this->get_id_from_slug( $slug );
-
-		switch ( $type ) {
-			case 'taxonomy':
-				$link = ( $term = get_term( $id ) ) ? get_term_link( $term ) : false;
-			break;
-			case 'post_type':
-				$link = post_type_exists( $id ) ? get_post_type_archive_link( $id ) : false;
-			break;
-			default:
-				$link = false;
-		}
+		$link    = $this->get_archive_url_from_slug( $slug );
 
 		if ( ! $link ) {
 			return;
@@ -434,7 +441,7 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content_outside_before() {
-		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
+		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() || is_author() || is_search() ) ) {
 			return;
 		}
 
@@ -453,7 +460,7 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content_inside_before() {
-		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
+		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() || is_author() || is_search() ) ) {
 			return;
 		}
 
@@ -476,7 +483,7 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content_inside_after() {
-		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
+		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() || is_author() || is_search() ) ) {
 			return;
 		}
 
@@ -499,7 +506,7 @@ class Mai_Archive_Pages {
 	 * @return void
 	 */
 	function do_content_outside_after() {
-		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() ) ) {
+		if ( ! ( maiap_is_post_type() || maiap_is_taxonomy() || is_author() || is_search() ) ) {
 			return;
 		}
 
@@ -731,6 +738,12 @@ class Mai_Archive_Pages {
 			case 'post_type':
 				$link = post_type_exists( $id ) ? get_post_type_archive_link( $id ) : false;
 			break;
+			case 'author':
+				$link = get_user_by( 'id', $id ) ? get_author_posts_url( $id ) : false;
+			break;
+			case 'search':
+				$link = home_url( '?s=Mai' );
+			break;
 			default:
 				$link = '';
 		}
@@ -779,6 +792,10 @@ class Mai_Archive_Pages {
 			$type = 'taxonomy';
 		} elseif ( $this->has_string( sprintf( '%s_post_type_', $this->prefix ), $slug ) ) {
 			$type = 'post_type';
+		} elseif ( $this->has_string( sprintf( '%s_author_', $this->prefix ), $slug ) ) {
+			$type = 'author';
+		} elseif ( $this->has_string( sprintf( '%s_search_', $this->prefix ), $slug ) ) {
+			$type = 'search';
 		}
 
 		return $type;
@@ -816,9 +833,30 @@ class Mai_Archive_Pages {
 			$slug = maiap_get_archive_term_slug( get_queried_object_id(), $before );
 		} elseif ( maiap_is_post_type() ) {
 			$slug = maiap_get_archive_post_type_slug( get_post_type(), $before );
+		} elseif ( is_author() ) {
+			$slug = maiap_get_archive_author_slug( (int) get_query_var( 'author' ), $before );
+		} elseif ( is_search() ) {
+			$slug = maiap_get_archive_search_slug( 'results', $before );
 		}
 
 		return $slug;
+	}
+
+	/**
+	 * Builds a term title from the term ID.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int  $term_id The term ID.
+	 * @param bool $before  If before or after content.
+	 *
+	 * @return string
+	 */
+	function get_term_title( $term_id, $before ) {
+		$term     = get_term( $term_id );
+		$taxonomy = get_taxonomy( $term->taxonomy );
+
+		return $this->get_title( $term->name, $taxonomy->label, $before );
 	}
 
 	/**
@@ -838,20 +876,33 @@ class Mai_Archive_Pages {
 	}
 
 	/**
-	 * Builds a term title from the term ID.
+	 * Builds an author archive title from the author ID.
 	 *
-	 * @since 0.1.0
+	 * @since TBD
 	 *
-	 * @param int  $term_id The term ID.
-	 * @param bool $before  If before or after content.
+	 * @param int  $author_id The author ID.
+	 * @param bool $before    If before or after content.
 	 *
 	 * @return string
 	 */
-	function get_term_title( $term_id, $before ) {
-		$term     = get_term( $term_id );
-		$taxonomy = get_taxonomy( $term->taxonomy );
+	function get_author_title( $author_id, $before ) {
+		$user = get_user_by( 'id', $author_id );
 
-		return $this->get_title( $term->name, $taxonomy->label, $before );
+		return $this->get_title( $user->user_login, __( 'Author', 'mai-archive-pages' ), $before );
+	}
+
+	/**
+	 * Builds a search archive title from the author ID.
+	 *
+	 * @since TBD
+	 *
+	 * @param string $slug   The search slug.
+	 * @param bool   $before If before or after content.
+	 *
+	 * @return string
+	 */
+	function get_search_title( $slug, $before ) {
+		return $this->get_title( $slug, __( 'Search Results', 'mai-archive-pages' ), $before );
 	}
 
 	/**

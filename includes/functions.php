@@ -26,6 +26,12 @@ function maiap_get_archive_page( $before ) {
 	} elseif ( maiap_is_post_type() && ! is_paged() ) {
 		$type = is_home() ? 'post' : get_post_type();
 		$slug = $type ? maiap_get_archive_post_type_slug( $type, $before ) : '';
+	} elseif ( is_author() && ! is_paged() ) {
+		$type = (int) get_query_var( 'author' );
+		$slug = $type ? maiap_get_archive_author_slug( $type, $before ) : '';
+	} elseif ( is_search() && ! is_paged() ) {
+		$type = 'results';
+		$slug = $type ? maiap_get_archive_search_slug( $type, $before ) : '';
 	}
 
 	if ( ! $slug ) {
@@ -125,6 +131,38 @@ function maiap_get_archive_term_slug( $term_id, $before ) {
  */
 function maiap_get_archive_post_type_slug( $post_type, $before ) {
 	return maiap_get_slug( 'post_type', $post_type, $before );
+}
+
+/**
+ * Builds an author archive slug from the author ID.
+ *
+ * @access private
+ *
+ * @since TBD
+ *
+ * @param int  $author_id The author ID.
+ * @param bool $before    If before or after content.
+ *
+ * @return string
+ */
+function maiap_get_archive_author_slug( $author_id, $before ) {
+	return maiap_get_slug( 'author', $author_id, $before );
+}
+
+/**
+ * Builds an search archive slug.
+ *
+ * @access private
+ *
+ * @since TBD
+ *
+ * @param string $slug   The search slug.
+ * @param bool   $before If before or after content.
+ *
+ * @return string
+ */
+function maiap_get_archive_search_slug( $slug, $before ) {
+	return maiap_get_slug( 'search', $slug, $before );
 }
 
 /**
