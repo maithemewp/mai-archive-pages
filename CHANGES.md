@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.1 (1/3/24)
+* Fixed: Only load choices in the archive page editor. Fixes error when it trying to load fields on other screens.
+
 ## 1.4.0 (12/28/23)
 * Added: Support for author archives and search results pages.
 * Added: New setting to choose whether the content be inside the entries container or full width outside of the container.
