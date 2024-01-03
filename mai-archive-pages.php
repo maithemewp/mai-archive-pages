@@ -4,7 +4,7 @@
  * Plugin Name:     Mai Archive Pages
  * Plugin URI:      https://bizbudding.com/mai-design-pack/
  * Description:     Build robust and SEO-friendly archive pages with blocks.
- * Version:         1.4.0
+ * Version:         1.4.1
  *
  * Author:          BizBudding
  * Author URI:      https://bizbudding.com
@@ -92,7 +92,7 @@ final class Mai_Archive_Pages_Plugin {
 	private function setup_constants() {
 		// Plugin version.
 		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.4.0' );
+			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.4.1' );
 		}
 
 		// Plugin Folder Path.
@@ -286,7 +286,17 @@ final class Mai_Archive_Pages_Plugin {
 			return $field;
 		}
 
-		global $post;
+		global $pagenow, $post;
+
+		// Bail if not the editor.
+		if ( ! ( in_array( $pagenow, [ 'post-new.php', 'post.php' ], true ) && 'mai_archive_page' === get_post_type() ) ) {
+			return $field;
+		}
+
+		// Bail if no post.
+		if ( ! ( $post && isset( $post->post_name ) ) ) {
+			return $field;
+		}
 
 		$after                  = str_contains( $post->post_name, '_after_' );
 		$before                 = ! $after;
