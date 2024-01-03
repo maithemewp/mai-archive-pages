@@ -286,7 +286,17 @@ final class Mai_Archive_Pages_Plugin {
 			return $field;
 		}
 
-		global $post;
+		global $pagenow, $post;
+
+		// Bail if not the editor.
+		if ( ! ( in_array( $pagenow, [ 'post-new.php', 'post.php' ], true ) && 'mai_archive_page' === get_post_type() ) ) {
+			return $field;
+		}
+
+		// Bail if no post.
+		if ( ! ( $post && isset( $post->post_name ) ) ) {
+			return $field;
+		}
 
 		$after                  = str_contains( $post->post_name, '_after_' );
 		$before                 = ! $after;
