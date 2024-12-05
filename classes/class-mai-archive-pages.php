@@ -578,9 +578,11 @@ class Mai_Archive_Pages {
 			return;
 		}
 
-		if ( 'publish' === $status || ( 'private' === $status && current_user_can( 'edit_posts' ) ) ) {
-			$content = $this->get_processed_content( $post->post_content );
+		if ( 'publish' !== $status || ( 'private' === $status && ! current_user_can( 'edit_posts' ) ) ) {
+			return;
 		}
+
+		$content = $this->get_processed_content( $post->post_content );
 
 		if ( ! $content ) {
 			return;
@@ -689,6 +691,7 @@ class Mai_Archive_Pages {
 	 * Gets processed content, ready for display.
 	 *
 	 * @since 0.1.0
+	 * @since TBD Change order of processing to match Mai Engine, which matches WP.
 	 *
 	 * @param string $content The raw content.
 	 *
@@ -706,15 +709,17 @@ class Mai_Archive_Pages {
 		 */
 		global $wp_embed;
 
-		$content = $wp_embed->autoembed( $content );     // WP runs priority 8.
-		$content = $wp_embed->run_shortcode( $content ); // WP runs priority 8.
-		$content = do_blocks( $content );                // WP runs priority 9.
-		$content = wptexturize( $content );              // WP runs priority 10.
-		$content = wpautop( $content );                  // WP runs priority 10.
-		$content = shortcode_unautop( $content );        // WP runs priority 10.
-		$content = function_exists( 'wp_filter_content_tags' ) ? wp_filter_content_tags( $content ) : wp_make_content_images_responsive( $content ); // WP runs priority 10. WP 5.5 with fallback.
-		$content = do_shortcode( $content );             // WP runs priority 11.
-		$content = convert_smilies( $content );          // WP runs priority 20.
+		$blocks  = has_blocks( $content );
+		$content = $wp_embed->autoembed( $content );            // WP runs priority 8.
+		$content = $wp_embed->run_shortcode( $content );        // WP runs priority 8.
+		$content = $blocks ? do_blocks( $content ) : $content;  // WP runs priority 9.
+		$content = wptexturize( $content );                     // WP runs priority 10.
+		$content = ! $blocks ? wpautop( $content ) : $content;  // WP runs priority 10.
+		$content = shortcode_unautop( $content );               // WP runs priority 10.
+		$content = do_shortcode( $content );                    // WP runs priority 11.
+		$content = wp_filter_content_tags( $content );          // WP runs priority 12.
+		$content = convert_smilies( $content );                 // WP runs priority 20.
+		$content = str_replace( ']]>', ']]&gt;', $content );
 
 		return $content;
 	}

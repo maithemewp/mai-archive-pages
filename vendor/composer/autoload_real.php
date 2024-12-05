@@ -33,25 +33,18 @@ class ComposerAutoloaderInitacdb9082b718788c5798b428edf58e08
 
         $loader->register(true);
 
-        $includeFiles = \Composer\Autoload\ComposerStaticInitacdb9082b718788c5798b428edf58e08::$files;
-        foreach ($includeFiles as $fileIdentifier => $file) {
-            composerRequireacdb9082b718788c5798b428edf58e08($fileIdentifier, $file);
+        $filesToLoad = \Composer\Autoload\ComposerStaticInitacdb9082b718788c5798b428edf58e08::$files;
+        $requireFile = \Closure::bind(static function ($fileIdentifier, $file) {
+            if (empty($GLOBALS['__composer_autoload_files'][$fileIdentifier])) {
+                $GLOBALS['__composer_autoload_files'][$fileIdentifier] = true;
+
+                require $file;
+            }
+        }, null, null);
+        foreach ($filesToLoad as $fileIdentifier => $file) {
+            $requireFile($fileIdentifier, $file);
         }
 
         return $loader;
-    }
-}
-
-/**
- * @param string $fileIdentifier
- * @param string $file
- * @return void
- */
-function composerRequireacdb9082b718788c5798b428edf58e08($fileIdentifier, $file)
-{
-    if (empty($GLOBALS['__composer_autoload_files'][$fileIdentifier])) {
-        $GLOBALS['__composer_autoload_files'][$fileIdentifier] = true;
-
-        require $file;
     }
 }
