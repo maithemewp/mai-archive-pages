@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.2 (12/5/24)
+* Changed: Updated the updater.
+* Changed: Change processed content processing order to match Mai Engine and WP.
+
 ## 1.4.1 (1/3/24)
 * Fixed: Only load choices in the archive page editor. Fixes error when it trying to load fields on other screens.
 
@@ -10,7 +14,7 @@
 
 ## 1.3.1 (11/27/23)
 * Changed: Moves before content before content-sidebar-wrap element.
-* Changed: Updated updater.
+* Changed: Updated the updater.
 
 ## 1.3.0 (8/2/23)
 * Added: [Developers] Moved class methods to helper functions for more flexibility.

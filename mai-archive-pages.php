@@ -4,7 +4,7 @@
  * Plugin Name:     Mai Archive Pages
  * Plugin URI:      https://bizbudding.com/mai-design-pack/
  * Description:     Build robust and SEO-friendly archive pages with blocks.
- * Version:         1.4.1
+ * Version:         1.4.2
  *
  * Author:          BizBudding
  * Author URI:      https://bizbudding.com
@@ -92,7 +92,7 @@ final class Mai_Archive_Pages_Plugin {
 	private function setup_constants() {
 		// Plugin version.
 		if ( ! defined( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION' ) ) {
-			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.4.1' );
+			define( 'MAI_ARCHIVE_PAGES_PLUGIN_VERSION', '1.4.2' );
 		}
 
 		// Plugin Folder Path.
@@ -153,6 +153,7 @@ final class Mai_Archive_Pages_Plugin {
 		add_action( 'init',                              [ $this, 'register_content_types' ] );
 		add_action( 'acf/init',                          [ $this, 'register_field_group' ] );
 		add_filter( 'acf/load_field/key=maiap_location', [ $this, 'load_location_choices' ] );
+		add_action( 'admin_menu',                        [ $this, 'admin_menu_page' ] );
 		add_action( 'init',                              [ $this, 'init' ] );
 
 		register_activation_hook( __FILE__, array( $this, 'activate' ) );
@@ -229,7 +230,11 @@ final class Mai_Archive_Pages_Plugin {
 			'show_tagcloud'      => false,
 			'show_ui'            => true,
 			'rewrite'            => false,
-			'supports'           => array( 'title', 'editor' ),
+			'supports'           => [ 'title', 'editor' ],
+			'map_meta_cap'       => true, // Allow editing.
+			'capabilities'       => [
+				'create_posts' => 'do_not_allow', // Disable new posts.
+			],
 		) );
 	}
 
@@ -308,6 +313,25 @@ final class Mai_Archive_Pages_Plugin {
 		];
 
 		return $field;
+	}
+
+	/**
+	 * Registers plugin admin menu pages.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	function admin_menu_page() {
+		add_submenu_page(
+			'mai-theme',
+			esc_html__( 'Archive Pages', 'mai-archive-pages' ),
+			esc_html__( 'Archive Pages', 'mai-archive-pages' ),
+			'edit_posts',
+			'edit.php?post_type=mai_archive_page',
+			'',
+			null
+		);
 	}
 
 	/**
