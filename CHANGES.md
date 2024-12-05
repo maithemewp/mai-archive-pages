@@ -2,6 +2,7 @@
 
 ## 1.4.2 (12/5/24)
 * Changed: Updated the updater.
+* Changed: Change processed content processing order to match Mai Engine and WP.
 
 ## 1.4.1 (1/3/24)
 * Fixed: Only load choices in the archive page editor. Fixes error when it trying to load fields on other screens.
