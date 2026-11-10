@@ -302,6 +302,11 @@ class Mai_Archive_Pages {
 		$current_screen = get_current_screen();
 		$taxonomy       = $current_screen->taxonomy;
 
+		// A private taxonomy has no archive page, so its terms get no buttons.
+		if ( ! is_taxonomy_viewable( $taxonomy ) ) {
+			return;
+		}
+
 		add_action( "{$taxonomy}_edit_form", [ $this, 'add_edit_archive_buttons' ], 2, 2 );
 	}
 
