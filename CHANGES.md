@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.4 (11/10/26)
+* Fixed: The archive content buttons no longer show on terms of private taxonomies, which have no archive page.
+* Changed: Requires PHP 8.1, the same as Mai Engine.
+
 ## 1.4.3 (5/26/26)
 * Changed: Updated the updater for PHP 8.4 support.
 
